@@ -1,3 +1,7 @@
+# Natural Event Tracker
+
+> A web app, that tracks natural events around the world, using NASA's EONET (The Earth Observatory Natural Event Tracker) API.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
