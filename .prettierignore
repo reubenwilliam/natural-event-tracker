@@ -1,0 +1,3 @@
+# Ignore lockfiles
+bun.lock
+bun.lockb
