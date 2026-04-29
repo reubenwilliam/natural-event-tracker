@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "../ui/button";
 import { useTheme } from "next-themes";
 import { useCallback } from "react";
+import DarkLight from "@/assets/icons/dark-light";
 
 const AppHeader = () => {
   const { setTheme, resolvedTheme } = useTheme();
@@ -40,13 +41,15 @@ const AppHeader = () => {
             className="shrink-0 flex items-center text-foreground gap-1.5 transition-colors text-xs tracking-tight"
           >
             <Map />
-            <span className="text-sm font-heading tracking-wider text-foreground">
+            <span className="text-sm font-heading tracking-wider text-foreground font-medium">
               NATURAL EVENTS TRACKER
             </span>
           </Link>
         </div>
         <div className="flex items-center gap-1.5">
-          <Button onClick={toggleTheme}>Theme Toggle</Button>
+          <Button onClick={toggleTheme} size="icon" variant="ghost">
+            <DarkLight />
+          </Button>
         </div>
       </nav>
     </header>
