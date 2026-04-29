@@ -1,7 +1,7 @@
+import { QueryProvider } from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
-import { META_THEME_COLORS } from "@/lib/config";
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, JetBrains_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Syne } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
+const syne = Syne({
+  variable: "--font-syne",
   subsets: ["latin"],
 });
 
@@ -71,7 +71,7 @@ export default function RootLayout({
             __html: `
               try {
                 if (localStorage.theme === 'dark' || ((!('theme' in localStorage) || localStorage.theme === 'system') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                  document.querySelector('meta[name="theme-color"]').setAttribute('content', '${META_THEME_COLORS.dark}')
+                  document.querySelector('meta[name="theme-color"]').setAttribute('content', '${viewport.themeColor}')
                 }
                 if (localStorage.layout) {
                   document.documentElement.classList.add('layout-' + localStorage.layout)
@@ -82,17 +82,19 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${jetbrainsMono.variable} antialiased bg-background text-foreground overflow-x-hidden`}
+        className={`${geistSans.variable} ${geistMono.variable} ${syne.variable} antialiased bg-background text-foreground overflow-x-hidden`}
         suppressHydrationWarning
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          enableColorScheme={false}
-        >
-          {children}
-        </ThemeProvider>
+        <QueryProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            enableColorScheme={false}
+          >
+            {children}
+          </ThemeProvider>
+        </QueryProvider>
       </body>
     </html>
   );
