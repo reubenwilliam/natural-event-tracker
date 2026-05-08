@@ -5,11 +5,24 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Button } from "../ui/button";
 import { useTheme } from "next-themes";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import DarkLight from "@/assets/icons/dark-light";
+
+const dateFormat = new Intl.DateTimeFormat("en-GB", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hour12: false,
+  timeZone: "UTC",
+  timeZoneName: "short",
+});
 
 const AppHeader = () => {
   const { setTheme, resolvedTheme } = useTheme();
+  const [time, setTime] = useState(dateFormat.format(new Date()));
 
   const toggleTheme = useCallback(() => {
     const newTheme = resolvedTheme === "dark" ? "light" : "dark";
@@ -24,10 +37,18 @@ const AppHeader = () => {
     });
   }, [resolvedTheme, setTheme]);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTime(dateFormat.format(new Date()));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <header
       className={cn(
-        "fixed top-0 h-15 flex w-full flex-col bg-background backdrop-blur-lg z-10 transition-transform duration-200 ease-out",
+        "fixed top-0 h-15 flex w-full flex-col bg-transparent z-10 transition-transform duration-200 ease-out",
       )}
     >
       <nav
@@ -40,15 +61,21 @@ const AppHeader = () => {
             href="/"
             className="shrink-0 flex items-center text-foreground gap-1.5 transition-colors text-xs tracking-tight"
           >
-            <Map />
-            <span className="text-sm font-heading tracking-wider text-foreground font-medium">
+            <Map className="text-primary" />
+            <span className="text-sm font-heading tracking-wider font-medium text-primary">
               NATURAL EVENTS TRACKER
             </span>
           </Link>
         </div>
         <div className="flex items-center gap-1.5">
-          <Button onClick={toggleTheme} size="icon" variant="ghost">
-            <DarkLight />
+          <span className="text-[11px] text-primary tabular-nums">{time}</span>
+          <Button
+            onClick={toggleTheme}
+            size="icon"
+            variant="outline"
+            className="border-primary/50 dark:border-primary bg-primary/10 hover:bg-primary/25"
+          >
+            <DarkLight className="text-primary" />
           </Button>
         </div>
       </nav>
