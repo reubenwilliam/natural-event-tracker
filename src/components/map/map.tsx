@@ -58,7 +58,7 @@ function CustomZoomControl() {
   };
 
   const reset = () => {
-    map.flyTo(CENTER, MIN_ZOOM);
+    map.flyTo(CENTER, MIN_ZOOM, { duration: 1.0 });
   };
 
   return (
