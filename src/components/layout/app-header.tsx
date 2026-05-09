@@ -69,13 +69,8 @@ const AppHeader = () => {
         </div>
         <div className="flex items-center gap-1.5">
           <span className="text-[11px] text-primary tabular-nums">{time}</span>
-          <Button
-            onClick={toggleTheme}
-            size="icon"
-            variant="outline"
-            className="border-primary/50 dark:border-primary bg-primary/10 hover:bg-primary/25"
-          >
-            <DarkLight className="text-primary" />
+          <Button onClick={toggleTheme} size="icon" variant="outline">
+            <DarkLight />
           </Button>
         </div>
       </nav>

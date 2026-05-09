@@ -71,34 +71,32 @@ function CustomZoomControl() {
     >
       <Button
         variant="outline"
-        className="border-primary/50 dark:border-primary bg-primary/10 hover:bg-primary/25 text-[11px] font-heading uppercase tracking-widest"
+        className="text-[11px] font-heading uppercase tracking-widest"
         onClick={(e) => {
           e.stopPropagation();
           reset();
         }}
       >
-        <span className="text-primary">RESET</span>
+        <span>RESET</span>
       </Button>
       <div className="flex flex-col gap-0.5">
         <Button
           variant="outline"
-          className="border-primary/50 dark:border-primary bg-primary/10 hover:bg-primary/25"
           onClick={(e) => {
             e.stopPropagation();
             handleZoomIn();
           }}
         >
-          <Plus className="size-3 text-primary" />
+          <Plus className="size-3" />
         </Button>
         <Button
           variant="outline"
-          className="border-primary/50 dark:border-primary bg-primary/10 hover:bg-primary/25"
           onClick={(e) => {
             e.stopPropagation();
             handleZoomOut();
           }}
         >
-          <Minus className="size-3 text-primary" />
+          <Minus className="size-3" />
         </Button>
       </div>
     </div>
