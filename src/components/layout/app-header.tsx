@@ -68,7 +68,9 @@ const AppHeader = () => {
           </Link>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-[11px] text-primary tabular-nums">{time}</span>
+          <span className="text-[11px] hidden md:block text-primary tabular-nums">
+            {time}
+          </span>
           <Button onClick={toggleTheme} size="icon" variant="outline">
             <DarkLight />
           </Button>

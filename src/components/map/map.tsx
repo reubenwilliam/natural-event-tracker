@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import {
   MapContainer,
   Marker,
+  Polygon,
   Popup,
   TileLayer,
   useMap,
@@ -17,9 +18,14 @@ import { Button } from "../ui/button";
 import Plus from "@/assets/icons/plus";
 import Minus from "@/assets/icons/minus";
 import { createPortal } from "react-dom";
+import { EonetEvent } from "@/types/eonet";
 
 const MIN_ZOOM = 2;
 const CENTER = [0, 0] as [number, number];
+
+interface MapProps {
+  events: EonetEvent[];
+}
 
 interface CustomAttributionProps {
   position: L.ControlPosition;
@@ -159,7 +165,7 @@ function CustomAttribution({ position }: CustomAttributionProps) {
     : null;
 }
 
-const Map = () => {
+const Map = ({ events }: MapProps) => {
   const { resolvedTheme } = useTheme();
 
   const tileUrl =
@@ -167,66 +173,14 @@ const Map = () => {
       ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
       : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png";
 
-  const geometries = [
-    {
-      date: "2026-05-06T00:00:00Z",
-      type: "Point",
-      coordinates: [147.5, 7.6],
-    },
-    {
-      date: "2026-05-06T06:00:00Z",
-      type: "Point",
-      coordinates: [146.9, 7.4],
-    },
-    {
-      date: "2026-05-06T12:00:00Z",
-      type: "Point",
-      coordinates: [145.7, 7.1],
-    },
-    {
-      date: "2026-05-06T18:00:00Z",
-      type: "Point",
-      coordinates: [144.7, 7.3],
-    },
-    {
-      date: "2026-05-07T00:00:00Z",
-      type: "Point",
-      coordinates: [143.8, 7.2],
-    },
-    {
-      date: "2026-05-07T06:00:00Z",
-      type: "Point",
-      coordinates: [142.9, 7.5],
-    },
-    {
-      date: "2026-05-07T12:00:00Z",
-      type: "Point",
-      coordinates: [142.2, 7.7],
-    },
-    {
-      date: "2026-05-07T18:00:00Z",
-      type: "Point",
-      coordinates: [141.2, 8.1],
-    },
-    {
-      date: "2026-05-08T00:00:00Z",
-      type: "Point",
-      coordinates: [139.9, 8.4],
-    },
-  ];
-
-  const customIcon = new Icon({
-    iconUrl:
-      "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMTY2MzAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0ibHVjaWRlIGx1Y2lkZS1tYXAtcGluLWljb24gbHVjaWRlLW1hcC1waW4iPjxwYXRoIGQ9Ik0yMCAxMGMwIDQuOTkzLTUuNTM5IDEwLjE5My03LjM5OSAxMS43OTlhMSAxIDAgMCAxLTEuMjAyIDBDOS41MzkgMjAuMTkzIDQgMTQuOTkzIDQgMTBhOCA4IDAgMCAxIDE2IDAiLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEwIiByPSIzIi8+PC9zdmc+",
-    iconSize: [20, 20],
-  });
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const createCustomClusterIcon = (cluster: any) => {
     return L.divIcon({
-      html: `<div class="cluster-icon">${cluster.getChildCount()}</div>`,
-      className: "custom-marker-cluster",
-      iconSize: point(33, 33, true),
+      html: `<div class="flex font-number h-8 w-8 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-black backdrop-blur">
+        ${cluster.getChildCount()}
+      </div>`,
+      className: "",
+      iconSize: point(32, 32, true),
     });
   };
 
@@ -253,18 +207,141 @@ const Map = () => {
         chunkedLoading
         iconCreateFunction={createCustomClusterIcon}
       >
-        {geometries.map((geometry, index) => (
-          <Marker
-            key={index}
-            position={[...geometry.coordinates].reverse() as [number, number]}
-            icon={customIcon}
-          >
-            <Popup>This is an event</Popup>
-          </Marker>
-        ))}
+        {events?.map((event) => {
+          const latestGeometry = event.geometries[event.geometries.length - 1];
+          const categoryId = event.categories[0]?.id;
+
+          if (latestGeometry.type === "Polygon") {
+            const polygonCoords = latestGeometry.coordinates[0].map(
+              (coordPair) => [coordPair[1], coordPair[0]] as [number, number],
+            );
+            const eventColor = getPolygonColor(categoryId);
+
+            return (
+              <Polygon
+                key={event.id}
+                positions={polygonCoords}
+                pathOptions={{
+                  color: eventColor,
+                  fillColor: eventColor,
+                  fillOpacity: 0.2,
+                  weight: 2,
+                }}
+              ></Polygon>
+            );
+          }
+
+          if (latestGeometry.type === "Point") {
+            return (
+              <Marker
+                key={event.id}
+                position={[
+                  latestGeometry.coordinates[0],
+                  latestGeometry.coordinates[0],
+                ]}
+                icon={getIconFactory(categoryId)}
+              ></Marker>
+            );
+          }
+        })}
       </MarkerClusterGroup>
     </MapContainer>
   );
+};
+
+const createPingIcon = (colorClass: string) => {
+  return L.divIcon({
+    className: "",
+    html: `<span class="relative flex h-6 w-6 items-center justify-center">
+        <span class="absolute inline-flex h-full w-full animate-ping animation-duration-[3s] rounded-full ${colorClass} opacity-75"></span>
+        <span class="relative inline-flex h-3 w-3 rounded-full ${colorClass}"></span>
+      </span>`,
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
+  });
+};
+
+const ICONS = {
+  drought: createPingIcon("bg-yellow-500"),
+  wildfire: createPingIcon("bg-red-500"),
+  dust: createPingIcon("bg-taupe-500"),
+  earthquake: createPingIcon("bg-zinc-500"),
+  flood: createPingIcon("bg-blue-500"),
+  landslide: createPingIcon("bg-stone-600"),
+  manmade: createPingIcon("bg-lime-500"),
+  ice: createPingIcon("bg-cyan-500"),
+  storm: createPingIcon("bg-indigo-500"),
+  snow: createPingIcon("bg-slate-300"),
+  temperature: createPingIcon("bg-orange-500"),
+  volcano: createPingIcon("bg-amber-500"),
+  water: createPingIcon("bg-sky-500"),
+  default: createPingIcon("bg-primary"),
+};
+
+const getIconFactory = (categoryId: number) => {
+  switch (categoryId) {
+    case 6:
+      return ICONS.drought;
+    case 7:
+      return ICONS.dust;
+    case 8:
+      return ICONS.wildfire;
+    case 9:
+      return ICONS.flood;
+    case 10:
+      return ICONS.storm;
+    case 12:
+      return ICONS.volcano;
+    case 13:
+      return ICONS.water;
+    case 14:
+      return ICONS.landslide;
+    case 15:
+      return ICONS.ice;
+    case 16:
+      return ICONS.earthquake;
+    case 17:
+      return ICONS.snow;
+    case 18:
+      return ICONS.temperature;
+    case 19:
+      return ICONS.manmade;
+    default:
+      return ICONS.default;
+  }
+};
+
+const getPolygonColor = (categoryId: number) => {
+  switch (categoryId) {
+    case 6:
+      return "oklch(85.2% 0.199 91.936)";
+    case 7:
+      return "oklch(54.7% 0.021 43.1)";
+    case 8:
+      return "oklch(63.7% 0.237 25.331)";
+    case 9:
+      return "oklch(62.3% 0.214 259.815)";
+    case 10:
+      return "oklch(58.5% 0.233 277.117)";
+    case 12:
+      return "oklch(76.9% 0.188 70.08)";
+    case 13:
+      return "oklch(68.5% 0.169 237.323)";
+    case 14:
+      return "oklch(44.4% 0.011 73.639)";
+    case 15:
+      return "oklch(71.5% 0.143 215.221)";
+    case 16:
+      return "oklch(55.2% 0.016 285.938)";
+    case 17:
+      return "oklch(86.9% 0.022 252.894)";
+    case 18:
+      return "oklch(70.5% 0.213 47.604)";
+    case 19:
+      return "oklch(76.8% 0.233 130.85)";
+    default:
+      return "var(--primary)";
+  }
 };
 
 export default Map;
