@@ -1,9 +1,13 @@
 "use client";
 
-import L, { Icon, point } from "leaflet";
+import Minus from "@/assets/icons/minus";
+import Plus from "@/assets/icons/plus";
+import { EonetEvent } from "@/types/eonet";
+import L, { LatLngBoundsExpression, point } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   MapContainer,
   Marker,
@@ -15,13 +19,14 @@ import {
 } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import { Button } from "../ui/button";
-import Plus from "@/assets/icons/plus";
-import Minus from "@/assets/icons/minus";
-import { createPortal } from "react-dom";
-import { EonetEvent } from "@/types/eonet";
 
 const MIN_ZOOM = 2;
 const CENTER = [0, 0] as [number, number];
+
+const worldBounds: LatLngBoundsExpression = [
+  [-90, -180],
+  [90, 180],
+];
 
 interface MapProps {
   events: EonetEvent[];
@@ -69,7 +74,7 @@ function CustomZoomControl() {
 
   return (
     <div
-      className="absolute bottom-18 inset-x-4 z-1000 flex items-end justify-between gap-0.5"
+      className="absolute bottom-18 inset-x-4 z-1000 flex items-end justify-between gap-0.5 pointer-events-none"
       onDoubleClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
       onMouseUp={(e) => e.stopPropagation()}
@@ -77,7 +82,7 @@ function CustomZoomControl() {
     >
       <Button
         variant="outline"
-        className="text-[11px] font-heading uppercase tracking-widest"
+        className="text-[11px] pointer-events-auto font-heading uppercase tracking-widest"
         onClick={(e) => {
           e.stopPropagation();
           reset();
@@ -85,7 +90,7 @@ function CustomZoomControl() {
       >
         <span>RESET</span>
       </Button>
-      <div className="flex flex-col gap-0.5">
+      <div className="flex flex-col gap-0.5 pointer-events-auto">
         <Button
           variant="outline"
           onClick={(e) => {
@@ -175,12 +180,46 @@ const Map = ({ events }: MapProps) => {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const createCustomClusterIcon = (cluster: any) => {
+    const markers = cluster.getAllChildMarkers();
+    const count = cluster.getChildCount();
+
+    const counts: Record<string, number> = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    markers.forEach((marker: any) => {
+      const id = marker.options.icon.options.categoryId;
+      if (id) {
+        counts[id] = (counts[0] || 0) + 1;
+      }
+    });
+
+    let dominantId = "15";
+    let maxCount = 0;
+    Object.entries(counts).forEach(([id, c]) => {
+      if (c > maxCount) {
+        maxCount = c;
+        dominantId = id;
+      }
+    });
+
+    const bgColor = getClusterBgClass(Number(dominantId));
+
+    let sizeClass = "h-8 w-8 text-xs";
+    let pixelSize = 32;
+
+    if (count >= 50) {
+      sizeClass = "h-14 w-14 text-[16px]";
+      pixelSize = 56;
+    } else if (count >= 10) {
+      sizeClass = "h-11 w-11 text-[14px]";
+      pixelSize = 44;
+    }
+
     return L.divIcon({
-      html: `<div class="flex font-number h-8 w-8 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-black backdrop-blur">
-        ${cluster.getChildCount()}
+      html: `<div class="flex ${sizeClass} items-center justify-center rounded-full  ${bgColor} font-number font-bold text-black shadow-lg backdrop-blur-md transition-all duration-300">
+        ${count}
       </div>`,
       className: "",
-      iconSize: point(32, 32, true),
+      iconSize: point(pixelSize, pixelSize, true),
     });
   };
 
@@ -189,10 +228,11 @@ const Map = ({ events }: MapProps) => {
       center={CENTER}
       zoom={MIN_ZOOM}
       minZoom={MIN_ZOOM}
+      maxBounds={worldBounds}
+      maxBoundsViscosity={1.0}
       className="h-full w-full z-0"
       attributionControl={false}
       zoomControl={false}
-      worldCopyJump={true}
       style={{ backgroundColor: "var(--background)" }}
     >
       <TileLayer
@@ -236,11 +276,13 @@ const Map = ({ events }: MapProps) => {
               <Marker
                 key={event.id}
                 position={[
-                  latestGeometry.coordinates[0],
+                  latestGeometry.coordinates[1],
                   latestGeometry.coordinates[0],
                 ]}
                 icon={getIconFactory(categoryId)}
-              ></Marker>
+              >
+                <Popup>{event.title}</Popup>
+              </Marker>
             );
           }
         })}
@@ -249,7 +291,7 @@ const Map = ({ events }: MapProps) => {
   );
 };
 
-const createPingIcon = (colorClass: string) => {
+const createPingIcon = (colorClass: string, categoryId: number) => {
   return L.divIcon({
     className: "",
     html: `<span class="relative flex h-6 w-6 items-center justify-center">
@@ -258,24 +300,26 @@ const createPingIcon = (colorClass: string) => {
       </span>`,
     iconSize: [16, 16],
     iconAnchor: [8, 8],
-  });
+    categoryId: categoryId,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any);
 };
 
 const ICONS = {
-  drought: createPingIcon("bg-yellow-500"),
-  wildfire: createPingIcon("bg-red-500"),
-  dust: createPingIcon("bg-taupe-500"),
-  earthquake: createPingIcon("bg-zinc-500"),
-  flood: createPingIcon("bg-blue-500"),
-  landslide: createPingIcon("bg-stone-600"),
-  manmade: createPingIcon("bg-lime-500"),
-  ice: createPingIcon("bg-cyan-500"),
-  storm: createPingIcon("bg-indigo-500"),
-  snow: createPingIcon("bg-slate-300"),
-  temperature: createPingIcon("bg-orange-500"),
-  volcano: createPingIcon("bg-amber-500"),
-  water: createPingIcon("bg-sky-500"),
-  default: createPingIcon("bg-primary"),
+  drought: createPingIcon("bg-yellow-500", 6),
+  wildfire: createPingIcon("bg-red-500", 8),
+  dust: createPingIcon("bg-taupe-500", 7),
+  earthquake: createPingIcon("bg-zinc-500", 16),
+  flood: createPingIcon("bg-blue-500", 9),
+  landslide: createPingIcon("bg-stone-600", 14),
+  manmade: createPingIcon("bg-lime-500", 19),
+  ice: createPingIcon("bg-cyan-500", 15),
+  storm: createPingIcon("bg-indigo-500", 10),
+  snow: createPingIcon("bg-slate-300", 17),
+  temperature: createPingIcon("bg-orange-500", 18),
+  volcano: createPingIcon("bg-amber-500", 12),
+  water: createPingIcon("bg-sky-500", 13),
+  default: createPingIcon("bg-primary", 0),
 };
 
 const getIconFactory = (categoryId: number) => {
@@ -341,6 +385,39 @@ const getPolygonColor = (categoryId: number) => {
       return "oklch(76.8% 0.233 130.85)";
     default:
       return "var(--primary)";
+  }
+};
+
+const getClusterBgClass = (categoryId: number) => {
+  switch (categoryId) {
+    case 6:
+      return "bg-yellow-500/80";
+    case 7:
+      return "bg-taupe-500/80";
+    case 8:
+      return "bg-red-500/80";
+    case 9:
+      return "bg-blue-600/80";
+    case 10:
+      return "bg-indigo-500/80";
+    case 12:
+      return "bg-orange-500/80";
+    case 13:
+      return "bg-sky-500/80";
+    case 14:
+      return "bg-stone-600/80";
+    case 15:
+      return "bg-cyan-400/80";
+    case 16:
+      return "bg-zinc-500/80";
+    case 17:
+      return "bg-slate-300/80";
+    case 18:
+      return "bg-orange-500/80";
+    case 19:
+      return "bg-lime-500/80";
+    default:
+      return "bg-primary/80";
   }
 };
 

@@ -36,7 +36,7 @@ const Page = () => {
         <Marquee
           pauseOnHover
           repeat={5}
-          className="text-[9px] border border-primary/50 dark:border-primary bg-primary/10"
+          className="text-[9px] border border-primary/50 dark:border-primary bg-background/20"
         >
           <span className="gap-4">EVENTS GO HERE...</span>
         </Marquee>
