@@ -48,7 +48,7 @@ const AppHeader = () => {
   return (
     <header
       className={cn(
-        "fixed top-0 h-15 flex w-full flex-col bg-transparent z-10 transition-transform duration-200 ease-out",
+        "fixed top-0 h-15 flex w-full flex-col bg-transparent z-10 transition-transform duration-200 ease-out pointer-events-none",
       )}
     >
       <nav
@@ -56,7 +56,7 @@ const AppHeader = () => {
           "top-0 flex h-full items-center justify-between px-2 sm:px-4",
         )}
       >
-        <div className="flex items-center gap-0">
+        <div className="flex items-center gap-0 pointer-events-auto">
           <Link
             href="/"
             className="shrink-0 flex items-center text-foreground gap-1.5 transition-colors text-xs tracking-tight"
@@ -67,7 +67,7 @@ const AppHeader = () => {
             </span>
           </Link>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 pointer-events-auto">
           <span className="text-[11px] hidden md:block text-primary tabular-nums">
             {time}
           </span>

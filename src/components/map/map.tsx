@@ -23,6 +23,8 @@ import {
 } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import { Button } from "../ui/button";
+import { EonetCategory } from "../../types/eonet";
+import { ALL_NASA_CATEGORIES } from "@/types/categories";
 
 const MIN_ZOOM = 2;
 const CENTER = [0, 0] as [number, number];
@@ -61,7 +63,7 @@ function MapEventsComponent() {
   return null;
 }
 
-function CustomZoomControl() {
+function MapControls({ categories }: { categories: EonetCategory[] }) {
   const map = useMap();
 
   const handleZoomIn = () => {
@@ -84,35 +86,65 @@ function CustomZoomControl() {
       onMouseUp={(e) => e.stopPropagation()}
       onWheel={(e) => e.stopPropagation()}
     >
-      <Button
-        variant="outline"
-        className="text-[11px] pointer-events-auto font-heading uppercase tracking-widest"
-        onClick={(e) => {
-          e.stopPropagation();
-          reset();
-        }}
-      >
-        <span>RESET</span>
-      </Button>
-      <div className="flex flex-col gap-0.5 pointer-events-auto">
-        <Button
-          variant="outline"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleZoomIn();
-          }}
-        >
-          <Plus className="size-3" />
-        </Button>
-        <Button
-          variant="outline"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleZoomOut();
-          }}
-        >
-          <Minus className="size-3" />
-        </Button>
+      <div className="border border-primary/50 dark:border-primary p-1.5 gap-2 pointer-events-none bg-background/20">
+        <span className="font-heading text-[11px] tracking-widest text-primary">
+          KEY:
+        </span>
+        <div className="grid grid-cols-2 gap-2.5">
+          {categories.map((category) => (
+            <div key={category.id} className="flex items-center gap-1">
+              <span
+                className={`h-2 w-2 rounded-xs ${getClusterBgClass(category.id)}`}
+              />
+              <span className="font-number text-[10px]">{category.title}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="flex flex-col gap-2 pointer-events-none">
+        <div className="flex flex-col gap-1 items-end pointer-events-none">
+          <Button
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleZoomIn();
+            }}
+            className="pointer-events-auto"
+          >
+            <Plus className="size-3" />
+          </Button>
+          <Button
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleZoomOut();
+            }}
+            className="pointer-events-auto"
+          >
+            <Minus className="size-3" />
+          </Button>
+        </div>
+        <div className="flex items-center gap-1 pointer-events-auto">
+          <Button
+            variant="outline"
+            className="text-[11px] font-heading uppercase tracking-widest"
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+          >
+            <span>FILTER</span>
+          </Button>
+          <Button
+            variant="outline"
+            className="text-[11px] font-heading uppercase tracking-widest"
+            onClick={(e) => {
+              e.stopPropagation();
+              reset();
+            }}
+          >
+            <span>RESET</span>
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -262,7 +294,7 @@ const Map = ({ events }: MapProps) => {
         url={tileUrl}
       />
       <MapEventsComponent />
-      <CustomZoomControl />
+      <MapControls categories={ALL_NASA_CATEGORIES} />
       <CustomAttribution position="bottomright" />
 
       <MarkerClusterGroup
@@ -294,6 +326,15 @@ const Map = ({ events }: MapProps) => {
           }
 
           if (latestGeometry.type === "Point") {
+            const latDmsCoord = convertDecimalToDMS(
+              latestGeometry.coordinates[1],
+              "lat",
+            );
+            const lngDmsCoord = convertDecimalToDMS(
+              latestGeometry.coordinates[0],
+              "lng",
+            );
+
             return (
               <Marker
                 key={event.id}
@@ -320,8 +361,13 @@ const Map = ({ events }: MapProps) => {
                         <h3 className="text-[11px] font-semibold text-primary">
                           {event.title}
                         </h3>
-                        <span className="text-[10px] font-mono">
+                        <span className="text-[9px] font-mono">
                           {event.description}
+                        </span>
+                        <span className="text-[9px] font-number text-muted-foreground">
+                          {`${latDmsCoord.degrees}° ${latDmsCoord.minutes}' ${latDmsCoord.seconds}" ${latDmsCoord.direction}`}
+                          ,{" "}
+                          {`${lngDmsCoord.degrees}° ${lngDmsCoord.minutes}' ${lngDmsCoord.seconds}" ${lngDmsCoord.direction}`}
                         </span>
                       </div>
 
@@ -483,5 +529,42 @@ const getClusterBgClass = (categoryId: number) => {
       return "bg-primary/80";
   }
 };
+
+interface DMS {
+  degrees: number;
+  minutes: number;
+  seconds: number;
+  direction: string;
+}
+
+/**
+ * Converts decimal degrees to DMS format with direction.
+ * @param decimal - The coordinate in decimal degrees.
+ * @param type - 'lat' for Latitude, 'lng' for Longitude.
+ */
+
+function convertDecimalToDMS(decimal: number, type: "lat" | "lng"): DMS {
+  const absoluteValue = Math.abs(decimal);
+
+  const degrees = Math.floor(absoluteValue);
+  const minutesRemainder = (absoluteValue - degrees) * 60;
+
+  const minutes = Math.floor(minutesRemainder);
+  const seconds = (minutesRemainder - minutes) * 60;
+
+  let direction = "";
+  if (type === "lat") {
+    direction = decimal >= 0 ? "N" : "S";
+  } else {
+    direction = decimal >= 0 ? "E" : "W";
+  }
+
+  return {
+    degrees,
+    minutes,
+    seconds: parseFloat(seconds.toFixed(2)),
+    direction,
+  };
+}
 
 export default Map;

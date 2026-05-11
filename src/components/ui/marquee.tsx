@@ -32,6 +32,12 @@ interface MarqueeProps extends ComponentPropsWithoutRef<"div"> {
    * @default 4
    */
   repeat?: number;
+  /**
+   * The total time it takes for the marquee to complete one loop.
+   * Increase this value to slow down the animation.
+   * @default "40s"
+   */
+  duration?: string;
 }
 
 export function Marquee({
@@ -41,6 +47,7 @@ export function Marquee({
   children,
   vertical = false,
   repeat = 4,
+  duration = "40s",
   ...props
 }: MarqueeProps) {
   return (
@@ -67,7 +74,7 @@ export function Marquee({
       </Badge>
       <div
         className={cn(
-          "flex flex-1 overflow-hidden gap-(--gap) p-2 [--duration:5s] [--gap:1rem]",
+          "flex flex-1 overflow-hidden gap-(--gap) p-2 [--gap:1rem]",
           {
             "flex-row items-center mask-[linear-gradient(to_right,transparent,black_10%,black_100%)]":
               !vertical,
@@ -75,6 +82,7 @@ export function Marquee({
               vertical,
           },
         )}
+        style={{ "--duration": duration } as React.CSSProperties}
       >
         {Array(repeat)
           .fill(0)
