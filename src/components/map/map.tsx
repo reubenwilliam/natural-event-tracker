@@ -1,11 +1,15 @@
 "use client";
 
+import Chain from "@/assets/icons/chain";
 import Minus from "@/assets/icons/minus";
 import Plus from "@/assets/icons/plus";
 import { EonetEvent } from "@/types/eonet";
+import { format } from "date-fns";
 import L, { LatLngBoundsExpression, point } from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { X } from "lucide-react";
 import { useTheme } from "next-themes";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -19,9 +23,6 @@ import {
 } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import { Button } from "../ui/button";
-import { ArrowUpRight, MoveUpRight, X } from "lucide-react";
-import { format } from "date-fns";
-import Link from "next/link";
 
 const MIN_ZOOM = 2;
 const CENTER = [0, 0] as [number, number];
@@ -337,7 +338,7 @@ const Map = ({ events }: MapProps) => {
                         >
                           <span className="text-muted-foreground hover:text-primary flex items-center gap-0.5">
                             <span>Source</span>
-                            <ArrowUpRight className="size-2.5" />
+                            <Chain className="size-2" />
                           </span>
                         </Link>
                       </div>
