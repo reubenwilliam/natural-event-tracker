@@ -27,7 +27,11 @@ const jetBrains = JetBrains_Mono({
 const siteUrl = process.env.NEXTPUBLIC_APP_URL ?? "http://localhost:3000";
 
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
+  colorScheme: "light dark",
 };
 
 export const metadata: Metadata = {

@@ -19,6 +19,9 @@ import {
 } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import { Button } from "../ui/button";
+import { ArrowUpRight, MoveUpRight, X } from "lucide-react";
+import { format } from "date-fns";
+import Link from "next/link";
 
 const MIN_ZOOM = 2;
 const CENTER = [0, 0] as [number, number];
@@ -111,6 +114,24 @@ function CustomZoomControl() {
         </Button>
       </div>
     </div>
+  );
+}
+
+function ClosePopupModal() {
+  const map = useMap();
+
+  const handleClose = () => {
+    map.closePopup();
+  };
+
+  return (
+    <Button
+      variant="ghost"
+      className="rounded-none p-1 h-6"
+      onClick={handleClose}
+    >
+      <X className="size-3.5" />
+    </Button>
   );
 }
 
@@ -281,7 +302,48 @@ const Map = ({ events }: MapProps) => {
                 ]}
                 icon={getIconFactory(categoryId)}
               >
-                <Popup>{event.title}</Popup>
+                <Popup className="theme-popup" closeButton={false}>
+                  <div className="flex flex-col min-w-50 w-75">
+                    <div className="flex flex-col p-2">
+                      <div className="flex justify-between items-center mb-2">
+                        <div
+                          className={`${getClusterBgClass(categoryId)} p-0.5 uppercase font-number text-[10px]`}
+                        >
+                          <span className="text-current">
+                            {event.categories[0]?.title}
+                          </span>
+                        </div>
+                        <ClosePopupModal />
+                      </div>
+                      <div className="flex flex-col gap-2 font-number">
+                        <h3 className="text-[11px] font-semibold text-primary">
+                          {event.title}
+                        </h3>
+                        <span className="text-[10px] font-mono">
+                          {event.description}
+                        </span>
+                      </div>
+
+                      <div className="mt-2 flex items-center justify-between border-t border-border/50 pt-2">
+                        <span className="text-[9px] text-muted-foreground font-number">
+                          {format(new Date(latestGeometry.date), "PPP")}
+                        </span>
+                        <Link
+                          href={event.sources[0].url}
+                          className="text-[9px] font-mono hover:underline text-muted-foreground decoration-primary"
+                          style={{ color: "var(--foreground)" }}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <span className="text-muted-foreground hover:text-primary flex items-center gap-0.5">
+                            <span>Source</span>
+                            <ArrowUpRight className="size-2.5" />
+                          </span>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </Popup>
               </Marker>
             );
           }
