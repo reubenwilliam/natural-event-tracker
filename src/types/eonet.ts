@@ -15,6 +15,7 @@ export type EonetGeometry = PointGeometry | PolygonGeometry;
 export interface EonetCategory {
   id: number;
   title: string;
+  description: string;
 }
 
 export interface EonetSource {

@@ -23,8 +23,6 @@ import {
 } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import { Button } from "../ui/button";
-import { EonetCategory } from "../../types/eonet";
-import { ALL_NASA_CATEGORIES } from "@/types/categories";
 
 const MIN_ZOOM = 2;
 const CENTER = [0, 0] as [number, number];
@@ -63,7 +61,7 @@ function MapEventsComponent() {
   return null;
 }
 
-function MapControls({ categories }: { categories: EonetCategory[] }) {
+function MapControls() {
   const map = useMap();
 
   const handleZoomIn = () => {
@@ -80,29 +78,14 @@ function MapControls({ categories }: { categories: EonetCategory[] }) {
 
   return (
     <div
-      className="absolute bottom-18 inset-x-4 z-1000 flex items-end justify-between gap-0.5 pointer-events-none"
+      className="absolute bottom-18 inset-x-4 z-1000 flex items-end gap-0.5  justify-end pointer-events-none"
       onDoubleClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
       onMouseUp={(e) => e.stopPropagation()}
       onWheel={(e) => e.stopPropagation()}
     >
-      <div className="border border-primary/50 dark:border-primary p-1.5 gap-2 pointer-events-none bg-background/20">
-        <span className="font-heading text-[11px] tracking-widest text-primary">
-          KEY:
-        </span>
-        <div className="grid grid-cols-2 gap-2.5">
-          {categories.map((category) => (
-            <div key={category.id} className="flex items-center gap-1">
-              <span
-                className={`h-2 w-2 rounded-xs ${getClusterBgClass(category.id)}`}
-              />
-              <span className="font-number text-[10px]">{category.title}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="flex flex-col gap-2 pointer-events-none">
-        <div className="flex flex-col gap-1 items-end pointer-events-none">
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1 items-end">
           <Button
             variant="outline"
             onClick={(e) => {
@@ -124,10 +107,10 @@ function MapControls({ categories }: { categories: EonetCategory[] }) {
             <Minus className="size-3" />
           </Button>
         </div>
-        <div className="flex items-center gap-1 pointer-events-auto">
+        <div className="flex items-center gap-1 ">
           <Button
             variant="outline"
-            className="text-[11px] font-heading uppercase tracking-widest"
+            className="text-[11px] font-heading uppercase tracking-widest pointer-events-auto"
             onClick={(e) => {
               e.stopPropagation();
             }}
@@ -136,7 +119,7 @@ function MapControls({ categories }: { categories: EonetCategory[] }) {
           </Button>
           <Button
             variant="outline"
-            className="text-[11px] font-heading uppercase tracking-widest"
+            className="text-[11px] font-heading uppercase tracking-widest pointer-events-auto"
             onClick={(e) => {
               e.stopPropagation();
               reset();
@@ -294,7 +277,7 @@ const Map = ({ events }: MapProps) => {
         url={tileUrl}
       />
       <MapEventsComponent />
-      <MapControls categories={ALL_NASA_CATEGORIES} />
+      <MapControls />
       <CustomAttribution position="bottomright" />
 
       <MarkerClusterGroup
@@ -418,16 +401,16 @@ const ICONS = {
   drought: createPingIcon("bg-yellow-500", 6),
   wildfire: createPingIcon("bg-red-500", 8),
   dust: createPingIcon("bg-taupe-500", 7),
-  earthquake: createPingIcon("bg-zinc-500", 16),
+  earthquake: createPingIcon("bg-slate-600", 16),
   flood: createPingIcon("bg-blue-500", 9),
-  landslide: createPingIcon("bg-stone-600", 14),
+  landslide: createPingIcon("bg-rose-400", 14),
   manmade: createPingIcon("bg-lime-500", 19),
   ice: createPingIcon("bg-cyan-500", 15),
   storm: createPingIcon("bg-indigo-500", 10),
   snow: createPingIcon("bg-slate-300", 17),
-  temperature: createPingIcon("bg-orange-500", 18),
-  volcano: createPingIcon("bg-amber-500", 12),
-  water: createPingIcon("bg-sky-500", 13),
+  temperature: createPingIcon("bg-orange-700", 18),
+  volcano: createPingIcon("bg-fuchsia-500", 12),
+  water: createPingIcon("bg-green-500", 13),
   default: createPingIcon("bg-primary", 0),
 };
 
@@ -477,19 +460,19 @@ const getPolygonColor = (categoryId: number) => {
     case 10:
       return "oklch(58.5% 0.233 277.117)";
     case 12:
-      return "oklch(76.9% 0.188 70.08)";
+      return "oklch(66.7% 0.295 322.15)";
     case 13:
-      return "oklch(68.5% 0.169 237.323)";
+      return "oklch(72.3% 0.219 149.579)";
     case 14:
-      return "oklch(44.4% 0.011 73.639)";
+      return "oklch(71.2% 0.194 13.428)";
     case 15:
       return "oklch(71.5% 0.143 215.221)";
     case 16:
-      return "oklch(55.2% 0.016 285.938)";
+      return "oklch(44.6% 0.043 257.281)";
     case 17:
       return "oklch(86.9% 0.022 252.894)";
     case 18:
-      return "oklch(70.5% 0.213 47.604)";
+      return "oklch(55.3% 0.195 38.402)";
     case 19:
       return "oklch(76.8% 0.233 130.85)";
     default:
@@ -510,19 +493,19 @@ const getClusterBgClass = (categoryId: number) => {
     case 10:
       return "bg-indigo-500/80";
     case 12:
-      return "bg-orange-500/80";
+      return "bg-fuchsia-500/80";
     case 13:
-      return "bg-sky-500/80";
+      return "bg-violet-500/80";
     case 14:
-      return "bg-stone-600/80";
+      return "bg-rose-400/80";
     case 15:
       return "bg-cyan-400/80";
     case 16:
-      return "bg-zinc-500/80";
+      return "bg-slate-600/80";
     case 17:
       return "bg-slate-300/80";
     case 18:
-      return "bg-orange-500/80";
+      return "bg-orange-700/80";
     case 19:
       return "bg-lime-500/80";
     default:

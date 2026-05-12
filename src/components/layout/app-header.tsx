@@ -56,7 +56,7 @@ const AppHeader = () => {
           "top-0 flex h-full items-center justify-between px-2 sm:px-4",
         )}
       >
-        <div className="flex items-center gap-0 pointer-events-auto">
+        <div className="flex flex-col items-start gap-1 pointer-events-auto">
           <Link
             href="/"
             className="shrink-0 flex items-center text-foreground gap-1.5 transition-colors text-xs tracking-tight"
@@ -66,6 +66,19 @@ const AppHeader = () => {
               NATURAL EVENTS TRACKER
             </span>
           </Link>
+          <div className="flex items-center gap-1 pointer-events-none">
+            <span className="text-[10px] uppercase font-number">
+              SOURCE MATERIAL
+            </span>
+            <Link
+              href="https://eonet.gsfc.nasa.gov/"
+              className="text-[10px] font-number pointer-events-auto text-primary hover:underline tracking-wider"
+              rel="noreferrer"
+              target="_blank"
+            >
+              EONET|NASA
+            </Link>
+          </div>
         </div>
         <div className="flex items-center gap-1.5 pointer-events-auto">
           <span className="text-[11px] hidden md:block text-primary tabular-nums">
