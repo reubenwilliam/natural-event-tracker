@@ -26,7 +26,17 @@ export interface EonetCategory {
 
 export interface EonetSource {
   id: string;
+  title: string;
+  source: string;
   url: string;
+}
+
+export interface EonetMagnitude {
+  id: string;
+  name: string;
+  unit: string;
+  description: string;
+  link: string;
 }
 
 export interface EonetEvent {
