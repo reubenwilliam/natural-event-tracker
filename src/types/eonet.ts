@@ -1,19 +1,25 @@
+export const API_URL = "https://eonet.gsfc.nasa.gov/api/v3";
+
 export interface PointGeometry {
   date: string;
   type: "Point";
+  magnitudeValue: number | null;
+  magnitudeUnit: string | null;
   coordinates: [number, number];
 }
 
 export interface PolygonGeometry {
   date: string;
   type: "Polygon";
+  magnitudeValue: number | null;
+  magnitudeUnit: string | null;
   coordinates: [number, number][][];
 }
 
 export type EonetGeometry = PointGeometry | PolygonGeometry;
 
 export interface EonetCategory {
-  id: number;
+  id: string;
   title: string;
   description: string;
 }
@@ -26,11 +32,11 @@ export interface EonetSource {
 export interface EonetEvent {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
   link: string;
   categories: EonetCategory[];
   sources: EonetSource[];
-  geometries: EonetGeometry[];
+  geometry: EonetGeometry[];
   closed: string | null;
 }
 

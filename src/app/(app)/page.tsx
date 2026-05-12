@@ -1,16 +1,14 @@
+import { API_URL } from "@/types/eonet";
 import MapContent from "./map-content";
 
 const fetchEvents = async () => {
-  const response = await fetch(
-    "https://eonet.gsfc.nasa.gov/api/v2.1/events?status=open&days=30",
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.NEXT_NASA_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      next: { revalidate: 3600 },
+  const response = await fetch(`${API_URL}/events?status=open&days=60`, {
+    headers: {
+      Authorization: `Bearer ${process.env.NEXT_NASA_API_KEY}`,
+      "Content-Type": "application/json",
     },
-  );
+    next: { revalidate: 3600 },
+  });
 
   if (!response.ok) {
     throw new Error("Failed to fetch events API.");
@@ -20,16 +18,13 @@ const fetchEvents = async () => {
 };
 
 const fetchCategories = async () => {
-  const response = await fetch(
-    "https://eonet.gsfc.nasa.gov/api/v2.1/categories",
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.NEXT_NASA_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      next: { revalidate: 86400 },
+  const response = await fetch(`${API_URL}/categories`, {
+    headers: {
+      Authorization: `Bearer ${process.env.NEXT_NASA_API_KEY}`,
+      "Content-Type": "application/json",
     },
-  );
+    next: { revalidate: 86400 },
+  });
 
   if (!response.ok) {
     throw new Error("Failed to fetch events API.");
@@ -46,8 +41,6 @@ const Page = async () => {
 
   const events = eventsQuery?.events || [];
   const categories = categoriesQuery?.categories || [];
-
-  console.log("Events Result:", events);
 
   return <MapContent initialEvents={events} initialCategories={categories} />;
 };

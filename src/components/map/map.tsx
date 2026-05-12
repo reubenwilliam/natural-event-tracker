@@ -229,7 +229,7 @@ const Map = ({ events }: MapProps) => {
       }
     });
 
-    let dominantId = "15";
+    let dominantId = "";
     let maxCount = 0;
     Object.entries(counts).forEach(([id, c]) => {
       if (c > maxCount) {
@@ -238,7 +238,7 @@ const Map = ({ events }: MapProps) => {
       }
     });
 
-    const bgColor = getClusterBgClass(Number(dominantId));
+    const bgColor = getClusterBgClass(dominantId);
 
     let sizeClass = "h-8 w-8 text-xs";
     let pixelSize = 32;
@@ -285,7 +285,7 @@ const Map = ({ events }: MapProps) => {
         iconCreateFunction={createCustomClusterIcon}
       >
         {events?.map((event) => {
-          const latestGeometry = event.geometries[event.geometries.length - 1];
+          const latestGeometry = event.geometry[event.geometry.length - 1];
           const categoryId = event.categories[0]?.id;
 
           if (latestGeometry.type === "Polygon") {
@@ -344,10 +344,21 @@ const Map = ({ events }: MapProps) => {
                         <h3 className="text-[11px] font-semibold text-primary">
                           {event.title}
                         </h3>
-                        <span className="text-[9px] font-mono">
-                          {event.description}
-                        </span>
-                        <span className="text-[9px] font-number text-muted-foreground">
+                        {event.description && (
+                          <span className="text-[9px] font-mono">
+                            {event.description}
+                          </span>
+                        )}
+                        {latestGeometry.magnitudeValue && (
+                          <span className="text-[9px] font-number">
+                            <span className="text-muted-foreground">
+                              Magnitude:{" "}
+                            </span>
+                            {latestGeometry.magnitudeValue}{" "}
+                            {latestGeometry.magnitudeUnit}
+                          </span>
+                        )}
+                        <span className="text-[9px] font-number text-muted-foreground tracking-tighter">
                           {`${latDmsCoord.degrees}° ${latDmsCoord.minutes}' ${latDmsCoord.seconds}" ${latDmsCoord.direction}`}
                           ,{" "}
                           {`${lngDmsCoord.degrees}° ${lngDmsCoord.minutes}' ${lngDmsCoord.seconds}" ${lngDmsCoord.direction}`}
@@ -383,7 +394,7 @@ const Map = ({ events }: MapProps) => {
   );
 };
 
-const createPingIcon = (colorClass: string, categoryId: number) => {
+const createPingIcon = (colorClass: string, categoryId: string) => {
   return L.divIcon({
     className: "",
     html: `<span class="relative flex h-6 w-6 items-center justify-center">
@@ -398,115 +409,115 @@ const createPingIcon = (colorClass: string, categoryId: number) => {
 };
 
 const ICONS = {
-  drought: createPingIcon("bg-yellow-500", 6),
-  wildfire: createPingIcon("bg-red-500", 8),
-  dust: createPingIcon("bg-taupe-500", 7),
-  earthquake: createPingIcon("bg-slate-600", 16),
-  flood: createPingIcon("bg-blue-500", 9),
-  landslide: createPingIcon("bg-rose-400", 14),
-  manmade: createPingIcon("bg-lime-500", 19),
-  ice: createPingIcon("bg-cyan-500", 15),
-  storm: createPingIcon("bg-indigo-500", 10),
-  snow: createPingIcon("bg-slate-300", 17),
-  temperature: createPingIcon("bg-orange-700", 18),
-  volcano: createPingIcon("bg-fuchsia-500", 12),
-  water: createPingIcon("bg-green-500", 13),
-  default: createPingIcon("bg-primary", 0),
+  drought: createPingIcon("bg-yellow-500", "drought"),
+  wildfire: createPingIcon("bg-red-500", "wildfires"),
+  dust: createPingIcon("bg-taupe-500", "dustHaze"),
+  earthquake: createPingIcon("bg-slate-600", "earthquakes"),
+  flood: createPingIcon("bg-blue-500", "floods"),
+  landslide: createPingIcon("bg-rose-400", "landslides"),
+  manmade: createPingIcon("bg-lime-500", "manmade"),
+  ice: createPingIcon("bg-cyan-500", "seaLakeIce"),
+  storm: createPingIcon("bg-indigo-500", "severeStorms"),
+  snow: createPingIcon("bg-slate-300", "snow"),
+  temperature: createPingIcon("bg-orange-700", "tempExtremes"),
+  volcano: createPingIcon("bg-fuchsia-500", "volcanoes"),
+  water: createPingIcon("bg-green-500", "waterColor"),
+  default: createPingIcon("bg-primary", "default"),
 };
 
-const getIconFactory = (categoryId: number) => {
+const getIconFactory = (categoryId: string) => {
   switch (categoryId) {
-    case 6:
+    case "drought":
       return ICONS.drought;
-    case 7:
+    case "dustHaze":
       return ICONS.dust;
-    case 8:
+    case "wildfires":
       return ICONS.wildfire;
-    case 9:
+    case "floods":
       return ICONS.flood;
-    case 10:
+    case "severeStorms":
       return ICONS.storm;
-    case 12:
+    case "volcanoes":
       return ICONS.volcano;
-    case 13:
+    case "waterColor":
       return ICONS.water;
-    case 14:
+    case "landslides":
       return ICONS.landslide;
-    case 15:
+    case "seaLakeIce":
       return ICONS.ice;
-    case 16:
+    case "earthquakes":
       return ICONS.earthquake;
-    case 17:
+    case "snow":
       return ICONS.snow;
-    case 18:
+    case "tempExtremes":
       return ICONS.temperature;
-    case 19:
+    case "manmade":
       return ICONS.manmade;
     default:
       return ICONS.default;
   }
 };
 
-const getPolygonColor = (categoryId: number) => {
+const getPolygonColor = (categoryId: string) => {
   switch (categoryId) {
-    case 6:
+    case "drought":
       return "oklch(85.2% 0.199 91.936)";
-    case 7:
+    case "dustHaze":
       return "oklch(54.7% 0.021 43.1)";
-    case 8:
+    case "wildfires":
       return "oklch(63.7% 0.237 25.331)";
-    case 9:
+    case "floods":
       return "oklch(62.3% 0.214 259.815)";
-    case 10:
+    case "severeStorms":
       return "oklch(58.5% 0.233 277.117)";
-    case 12:
+    case "volcanoes":
       return "oklch(66.7% 0.295 322.15)";
-    case 13:
+    case "waterColor":
       return "oklch(72.3% 0.219 149.579)";
-    case 14:
+    case "landslides":
       return "oklch(71.2% 0.194 13.428)";
-    case 15:
+    case "seaLakeIce":
       return "oklch(71.5% 0.143 215.221)";
-    case 16:
+    case "earthquakes":
       return "oklch(44.6% 0.043 257.281)";
-    case 17:
+    case "snow":
       return "oklch(86.9% 0.022 252.894)";
-    case 18:
+    case "tempExtremes":
       return "oklch(55.3% 0.195 38.402)";
-    case 19:
+    case "manmade":
       return "oklch(76.8% 0.233 130.85)";
     default:
       return "var(--primary)";
   }
 };
 
-const getClusterBgClass = (categoryId: number) => {
+const getClusterBgClass = (categoryId: string) => {
   switch (categoryId) {
-    case 6:
+    case "drought":
       return "bg-yellow-500/80";
-    case 7:
+    case "dustHaze":
       return "bg-taupe-500/80";
-    case 8:
+    case "wildfires":
       return "bg-red-500/80";
-    case 9:
+    case "floods":
       return "bg-blue-600/80";
-    case 10:
+    case "severeStorms":
       return "bg-indigo-500/80";
-    case 12:
+    case "volcanoes":
       return "bg-fuchsia-500/80";
-    case 13:
-      return "bg-violet-500/80";
-    case 14:
+    case "waterColor":
+      return "bg-green-500/80";
+    case "landslides":
       return "bg-rose-400/80";
-    case 15:
+    case "seaLakeIce":
       return "bg-cyan-400/80";
-    case 16:
+    case "earthquakes":
       return "bg-slate-600/80";
-    case 17:
+    case "snow":
       return "bg-slate-300/80";
-    case 18:
+    case "tempExtremes":
       return "bg-orange-700/80";
-    case 19:
+    case "manmade":
       return "bg-lime-500/80";
     default:
       return "bg-primary/80";

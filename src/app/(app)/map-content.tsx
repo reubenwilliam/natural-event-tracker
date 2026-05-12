@@ -1,5 +1,6 @@
 "use client";
 
+import { LoaderGlitchText } from "@/components/ui/loader-glitch-text";
 import { Marquee } from "@/components/ui/marquee";
 import {
   Tooltip,
@@ -16,7 +17,15 @@ interface MapContentProps {
 
 const Map = dynamic(() => import("@/components/map/map"), {
   ssr: false,
-  loading: () => <div></div>,
+  loading: () => (
+    <div className="flex items-center justify-center place-items-center bg-background h-full">
+      <LoaderGlitchText
+        text="LOADING..."
+        intensity="subtle"
+        className="text-xs"
+      />
+    </div>
+  ),
 });
 
 const MapContent = ({ initialCategories, initialEvents }: MapContentProps) => {
@@ -69,33 +78,33 @@ const MapContent = ({ initialCategories, initialEvents }: MapContentProps) => {
   );
 };
 
-const getCategoryColor = (categoryId: number) => {
+const getCategoryColor = (categoryId: string) => {
   switch (categoryId) {
-    case 6:
+    case "drought":
       return "bg-yellow-500";
-    case 7:
+    case "dustHaze":
       return "bg-taupe-500";
-    case 8:
+    case "wildfires":
       return "bg-red-500";
-    case 9:
+    case "floods":
       return "bg-blue-600";
-    case 10:
+    case "severeStorms":
       return "bg-indigo-500";
-    case 12:
+    case "volcanoes":
       return "bg-fuchsia-500";
-    case 13:
+    case "waterColor":
       return "bg-green-500";
-    case 14:
+    case "landslides":
       return "bg-rose-400";
-    case 15:
+    case "seaLakeIce":
       return "bg-cyan-400";
-    case 16:
+    case "earthquakes":
       return "bg-slate-600";
-    case 17:
+    case "snow":
       return "bg-slate-300";
-    case 18:
+    case "tempExtremes":
       return "bg-orange-700";
-    case 19:
+    case "manmade":
       return "bg-lime-500";
     default:
       return "bg-primary";
