@@ -4,27 +4,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none;
-  mix-blend-mode: normal;
-}
-
-::view-transition-old(root) {
-  z-index: 1;
-}
-
-::view-transition-new(root) {
-  z-index: 2;
-  animation: theme-reveal 0.5s ease-out;
-}
-
-@keyframes theme-reveal {
-  from {
-    opacity: 0;
-  }
-}
-
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -204,4 +183,10 @@
 
 .theme-popup .leaflet-popup-tip-container {
   margin-top: -1px;
+}
+
+@utility extend-touch-target {
+  @media (pointer: coarse) {
+    @apply relative touch-manipulation after:absolute after:-inset-2;
+  }
 }

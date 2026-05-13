@@ -1,14 +1,17 @@
 import { API_URL } from "@/types/eonet";
 import MapContent from "./map-content";
 
-const fetchEvents = async () => {
-  const response = await fetch(`${API_URL}/events?status=open&days=90`, {
-    headers: {
-      Authorization: `Bearer ${process.env.NEXT_NASA_API_KEY}`,
-      "Content-Type": "application/json",
+const fetchEvents = async (statusParam: string) => {
+  const response = await fetch(
+    `${API_URL}/events?status=${statusParam}&days=180`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.NEXT_NASA_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      next: { revalidate: 3600 },
     },
-    next: { revalidate: 3600 },
-  });
+  );
 
   if (!response.ok) {
     throw new Error("Failed to fetch events API.");
@@ -65,10 +68,21 @@ const fetchMagnitudes = async () => {
   return response.json();
 };
 
-const Page = async () => {
+const Page = async ({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) => {
+  const resolvedParams = await searchParams;
+
+  const allStatuses = ["open", "closed", "all"];
+  const status = allStatuses.includes(resolvedParams.status as string)
+    ? resolvedParams.status
+    : "open";
+
   const [eventsQuery, categoriesQuery, sourcesQuery, magnitudesQuery] =
     await Promise.all([
-      fetchEvents(),
+      fetchEvents(status as string),
       fetchCategories(),
       fetchSources(),
       fetchMagnitudes(),

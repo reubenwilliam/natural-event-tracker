@@ -8,7 +8,6 @@ import { format } from "date-fns";
 import L, { LatLngBoundsExpression, point } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { X } from "lucide-react";
-import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -23,6 +22,7 @@ import {
 } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import { Button } from "../ui/button";
+import { useTheme } from "next-themes";
 
 const MIN_ZOOM = 2;
 const CENTER = [0, 0] as [number, number];
@@ -63,6 +63,13 @@ function MapEventsComponent() {
 
 function MapControls() {
   const map = useMap();
+  const [zoomLevel, setZoomLevel] = useState(map.getZoom());
+
+  useMapEvents({
+    zoomend: () => {
+      setZoomLevel(map.getZoom());
+    },
+  });
 
   const handleZoomIn = () => {
     map.zoomIn();
@@ -93,6 +100,7 @@ function MapControls() {
               handleZoomIn();
             }}
             className="pointer-events-auto"
+            disabled={zoomLevel >= map.getMaxZoom()}
           >
             <Plus className="size-3" />
           </Button>
@@ -103,6 +111,7 @@ function MapControls() {
               handleZoomOut();
             }}
             className="pointer-events-auto"
+            disabled={zoomLevel <= map.getMinZoom()}
           >
             <Minus className="size-3" />
           </Button>
@@ -110,7 +119,7 @@ function MapControls() {
         <div className="flex items-center gap-1 ">
           <Button
             variant="outline"
-            className="text-[11px] font-heading uppercase tracking-widest pointer-events-auto"
+            className="text-[11px] font-heading uppercase tracking-widest pointer-events-auto hidden md:block"
             onClick={(e) => {
               e.stopPropagation();
             }}
@@ -210,10 +219,11 @@ function CustomAttribution({ position }: CustomAttributionProps) {
 const Map = ({ events }: MapProps) => {
   const { resolvedTheme } = useTheme();
 
-  const tileUrl =
-    resolvedTheme === "dark"
-      ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
-      : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png";
+  const DEFAULT_URL =
+    "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png";
+  const DARK_URL = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png";
+
+  const resolvedUrl = resolvedTheme === "dark" ? DARK_URL : DEFAULT_URL;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const createCustomClusterIcon = (cluster: any) => {
@@ -273,8 +283,8 @@ const Map = ({ events }: MapProps) => {
       style={{ backgroundColor: "var(--background)" }}
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url={tileUrl}
+        attribution='&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        url={resolvedUrl}
       />
       <MapEventsComponent />
       <MapControls />

@@ -4,6 +4,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, JetBrains_Mono, Syne } from "next/font/google";
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { META_THEME_COLORS } from "@/hooks/use-meta-color";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -81,7 +82,7 @@ export default function RootLayout({
             __html: `
               try {
                 if (localStorage.theme === 'dark' || ((!('theme' in localStorage) || localStorage.theme === 'system') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                  document.querySelector('meta[name="theme-color"]').setAttribute('content', '${viewport.themeColor}')
+                  document.querySelector('meta[name="theme-color"]').setAttribute('content', '${META_THEME_COLORS.dark}')
                 }
                 if (localStorage.layout) {
                   document.documentElement.classList.add('layout-' + localStorage.layout)
@@ -90,6 +91,7 @@ export default function RootLayout({
             `,
           }}
         />
+        <meta name="theme-color" content={META_THEME_COLORS.light} />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${syne.variable} ${jetBrains.variable} antialiased bg-background text-foreground overflow-x-hidden`}

@@ -3,48 +3,9 @@
 import Map from "@/assets/icons/map";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { Button } from "../ui/button";
-import { useTheme } from "next-themes";
-import { useCallback, useEffect, useState } from "react";
-import DarkLight from "@/assets/icons/dark-light";
-
-const dateFormat = new Intl.DateTimeFormat("en-GB", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-  hour12: false,
-  timeZone: "UTC",
-  timeZoneName: "short",
-});
+import { ModeSwitcher } from "./mode-switcher";
 
 const AppHeader = () => {
-  const { setTheme, resolvedTheme } = useTheme();
-  const [time, setTime] = useState(dateFormat.format(new Date()));
-
-  const toggleTheme = useCallback(() => {
-    const newTheme = resolvedTheme === "dark" ? "light" : "dark";
-
-    if (!document.startViewTransition) {
-      setTheme(newTheme);
-      return;
-    }
-
-    document.startViewTransition(() => {
-      setTheme(newTheme);
-    });
-  }, [resolvedTheme, setTheme]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTime(dateFormat.format(new Date()));
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <header
       className={cn(
@@ -80,13 +41,11 @@ const AppHeader = () => {
             </Link>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 pointer-events-auto">
-          <span className="text-[11px] hidden md:block text-primary tabular-nums">
-            {time}
+        <div className="items-center gap-2 pointer-events-auto hidden md:flex">
+          <span className="text-xs uppercase font-number text-muted-foreground">
+            MODE |
           </span>
-          <Button onClick={toggleTheme} size="icon" variant="outline">
-            <DarkLight />
-          </Button>
+          <ModeSwitcher />
         </div>
       </nav>
     </header>
