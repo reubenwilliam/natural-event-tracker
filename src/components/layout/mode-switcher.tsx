@@ -16,7 +16,16 @@ export function ModeSwitcher() {
   }, [metaColor, setMetaColor]);
 
   const toggleTheme = useCallback(() => {
-    setTheme(resolvedTheme === "dark" ? "light" : "dark");
+    const newTheme = resolvedTheme === "dark" ? "light" : "dark";
+
+    if (!document.startViewTransition) {
+      setTheme(newTheme);
+      return;
+    }
+
+    document.startViewTransition(() => {
+      setTheme(newTheme);
+    });
   }, [resolvedTheme, setTheme]);
 
   if (!isMounted) {

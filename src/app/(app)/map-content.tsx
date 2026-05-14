@@ -1,5 +1,6 @@
 "use client";
 
+import FilterGroup from "@/components/map/filter-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { LoaderGlitchText } from "@/components/ui/loader-glitch-text";
 import { Marquee } from "@/components/ui/marquee";
@@ -48,19 +49,19 @@ const MapContent = ({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [isPending, startTransition] = useTransition();
+  const [pending, startTransition] = useTransition();
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [selectedMagnitudes, setSelectedMagnitudes] = useState<string[]>([]);
-  const [selectedDays, setSelectedDays] = useState<number>(180);
+  const [selectedDays, setSelectedDays] = useState<number>(60);
 
   const deferredCategories = useDeferredValue(selectedCategories);
   const deferredSources = useDeferredValue(selectedSources);
   const deferredMagnitudes = useDeferredValue(selectedMagnitudes);
   const deferredDays = useDeferredValue(selectedDays);
 
-  const isFetchingAll = searchParams.get("status") === "all";
+  const fetchingAll = searchParams.get("status") === "all";
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -81,6 +82,21 @@ const MapContent = ({
       event.sources.forEach((src) => {
         counts[src.id] = (counts[src.id] || 0) + 1;
       });
+    });
+
+    return counts;
+  }, [events]);
+
+  const magnitudeCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+
+    events.forEach((event) => {
+      const latestGeometry = event.geometry[event.geometry.length - 1];
+
+      if (latestGeometry) {
+        const unit = latestGeometry.magnitudeUnit || "unknown";
+        counts[unit] = (counts[unit] || 0) + 1;
+      }
     });
 
     return counts;
@@ -157,7 +173,7 @@ const MapContent = ({
     });
   };
 
-  const marqueeDuration = `${Math.max(10, events.length * 1.5)}s`;
+  const marqueeDuration = `${Math.max(10, events.length * 0.5)}s`;
 
   return (
     <div className="relative h-full w-full">
@@ -168,105 +184,39 @@ const MapContent = ({
         <span className="font-heading font-bold text-[11px] tracking-widest text-primary pl-1">
           FILTER:
         </span>
-        <div className="flex flex-col items-start gap-2 p-0.5">
-          <div className="border-b border-primary/50 dark:border-primary w-full">
-            <span className="font-number text-[10px] text-primary uppercase">
-              CATEGORIES
-            </span>
-          </div>
-          <div className="grid grid-cols-2 gap-2 pointer-events-auto">
-            {categories.map((c) => {
-              const count = categoryCounts[c.id] || 0;
-              const disabled = count === 0;
-
-              return (
-                <div
-                  key={c.id}
-                  className={`flex items-center gap-1 ${disabled ? "opacity-40" : ""}`}
-                >
-                  <Checkbox
-                    checked={selectedCategories.includes(c.id)}
-                    onCheckedChange={() =>
-                      toggleFilter(
-                        c.id,
-                        selectedCategories,
-                        setSelectedCategories,
-                      )
-                    }
-                    disabled={disabled}
-                  />
-                  <span className="font-number text-[9px]">
-                    {c.title} ({count})
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        <div className="flex flex-col items-start gap-2 p-0.5">
-          <div className="border-b border-primary/50 dark:border-primary w-full">
-            <span className="font-number text-[10px] text-primary uppercase">
-              SOURCES
-            </span>
-          </div>
-          <div className="grid grid-cols-2 gap-2 pointer-events-auto">
-            {sources.map((s) => {
-              const count = sourceCounts[s.id] || 0;
-              const disabled = count === 0;
-
-              return (
-                <div
-                  key={s.id}
-                  className={`flex items-center gap-1 ${disabled ? "opacity-40" : ""}`}
-                >
-                  <Checkbox
-                    checked={selectedSources.includes(s.id)}
-                    onCheckedChange={() =>
-                      toggleFilter(s.id, selectedSources, setSelectedSources)
-                    }
-                    disabled={disabled}
-                  />
-                  <span
-                    className="font-number text-[9px] truncate"
-                    title={s.title}
-                  >
-                    {s.title}
-                  </span>
-                  <span className="font-number text-[9px]">({count})</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        <div className="flex flex-col items-start gap-2 p-0.5">
-          <div className="border-b border-primary/50 dark:border-primary w-full">
-            <span className="font-number text-[10px] text-primary uppercase">
-              MAGNITUDES
-            </span>
-          </div>
-          <div className="grid grid-cols-2 gap-2 pointer-events-auto">
-            {magnitudes.map((m) => (
-              <div key={m.id} className="flex items-center gap-1">
-                <Checkbox
-                  checked={selectedMagnitudes.includes(m.unit)}
-                  onCheckedChange={() =>
-                    toggleFilter(
-                      m.unit,
-                      selectedMagnitudes,
-                      setSelectedMagnitudes,
-                    )
-                  }
-                />
-                <span
-                  className="font-number text-[9px] truncate"
-                  title={m.name}
-                >
-                  {m.name}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <FilterGroup
+          label="categories"
+          items={categories}
+          counts={categoryCounts}
+          selected={selectedCategories}
+          getId={(c) => c.id}
+          getLabel={(c) => c.title}
+          onToggle={(id) =>
+            toggleFilter(id, selectedCategories, setSelectedCategories)
+          }
+        />
+        <FilterGroup
+          label="sources"
+          items={sources}
+          counts={sourceCounts}
+          selected={selectedSources}
+          getId={(s) => s.id}
+          getLabel={(s) => s.title}
+          onToggle={(id) =>
+            toggleFilter(id, selectedSources, setSelectedSources)
+          }
+        />
+        <FilterGroup
+          label="magnitudes"
+          items={magnitudes}
+          counts={magnitudeCounts}
+          selected={selectedMagnitudes}
+          getId={(m) => m.unit}
+          getLabel={(m) => m.name}
+          onToggle={(unit) =>
+            toggleFilter(unit, selectedMagnitudes, setSelectedMagnitudes)
+          }
+        />
       </div>
       <div className="absolute bottom-8 inset-x-4 pointer-events-none">
         <div className="w-fit hidden md:block border border-primary/50 dark:border-primary p-1.5 gap-2 bg-background/80 mb-2">

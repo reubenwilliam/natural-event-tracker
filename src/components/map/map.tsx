@@ -9,7 +9,7 @@ import L, { LatLngBoundsExpression, point } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { X } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   MapContainer,
@@ -142,22 +142,30 @@ function MapControls() {
   );
 }
 
-function ClosePopupModal() {
-  const map = useMap();
-
-  const handleClose = () => {
-    map.closePopup();
-  };
-
+function ClosePopupModal({ onClose }: { onClose: () => void }) {
   return (
     <Button
       variant="ghost"
       className="rounded-none p-1 h-6"
-      onClick={handleClose}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClose();
+      }}
     >
       <X className="size-3.5" />
     </Button>
   );
+}
+
+function MapBackgroundClick({
+  clearActiveEvent,
+}: {
+  clearActiveEvent: () => void;
+}) {
+  useMapEvents({
+    click: () => clearActiveEvent(),
+  });
+  return null;
 }
 
 function CustomAttribution({ position }: CustomAttributionProps) {
@@ -216,39 +224,48 @@ function CustomAttribution({ position }: CustomAttributionProps) {
     : null;
 }
 
-const Map = ({ events }: MapProps) => {
+function ThemeTileLayer() {
   const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   const DEFAULT_URL =
     "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png";
   const DARK_URL = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png";
 
-  const resolvedUrl = resolvedTheme === "dark" ? DARK_URL : DEFAULT_URL;
+  if (isDark) {
+    return (
+      <TileLayer
+        attribution='&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        url={DARK_URL}
+      />
+    );
+  }
+
+  return (
+    <TileLayer
+      attribution='&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>'
+      url={DEFAULT_URL}
+    />
+  );
+}
+
+const Map = ({ events }: MapProps) => {
+  const [activeEvent, setActiveEvent] = useState<EonetEvent | null>(null);
+
+  const eventsByCategory = useMemo(() => {
+    const grouped: Record<string, EonetEvent[]> = {};
+    events.forEach((event) => {
+      const catId = event.categories[0].id || "default";
+      if (!grouped[catId]) grouped[catId] = [];
+      grouped[catId].push(event);
+    });
+    return grouped;
+  }, [events]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const createCustomClusterIcon = (cluster: any) => {
-    const markers = cluster.getAllChildMarkers();
+  const createCustomClusterIcon = (cluster: any, categoryId: string) => {
     const count = cluster.getChildCount();
-
-    const counts: Record<string, number> = {};
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    markers.forEach((marker: any) => {
-      const id = marker.options.icon.options.categoryId;
-      if (id) {
-        counts[id] = (counts[0] || 0) + 1;
-      }
-    });
-
-    let dominantId = "";
-    let maxCount = 0;
-    Object.entries(counts).forEach(([id, c]) => {
-      if (c > maxCount) {
-        maxCount = c;
-        dominantId = id;
-      }
-    });
-
-    const bgColor = getClusterBgClass(dominantId);
+    const bgColor = getClusterBgClass(categoryId);
 
     let sizeClass = "h-8 w-8 text-xs";
     let pixelSize = 32;
@@ -270,6 +287,65 @@ const Map = ({ events }: MapProps) => {
     });
   };
 
+  const RenderedClusters = useMemo(() => {
+    return Object.entries(eventsByCategory).map(
+      ([categoryId, categoryEvents]) => (
+        <MarkerClusterGroup
+          key={categoryId}
+          chunkedLoading
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          iconCreateFunction={(cluster: any) =>
+            createCustomClusterIcon(cluster, categoryId)
+          }
+        >
+          {categoryEvents?.map((event) => {
+            const latestGeometry = event.geometry[event.geometry.length - 1];
+            const catId = event.categories[0]?.id;
+
+            if (latestGeometry.type === "Polygon") {
+              const polygonCoords = latestGeometry.coordinates[0].map(
+                (coordPair) => [coordPair[1], coordPair[0]] as [number, number],
+              );
+              const eventColor = getPolygonColor(catId);
+
+              return (
+                <Polygon
+                  key={event.id}
+                  positions={polygonCoords}
+                  pathOptions={{
+                    color: eventColor,
+                    fillColor: eventColor,
+                    fillOpacity: 0.2,
+                    weight: 2,
+                  }}
+                />
+              );
+            }
+
+            if (latestGeometry.type === "Point") {
+              return (
+                <Marker
+                  key={event.id}
+                  position={[
+                    latestGeometry.coordinates[1],
+                    latestGeometry.coordinates[0],
+                  ]}
+                  icon={getIconFactory(catId)}
+                  eventHandlers={{
+                    click: () =>
+                      setActiveEvent((prev) =>
+                        prev?.id === event.id ? null : event,
+                      ),
+                  }}
+                />
+              );
+            }
+          })}
+        </MarkerClusterGroup>
+      ),
+    );
+  }, [eventsByCategory]);
+
   return (
     <MapContainer
       center={CENTER}
@@ -280,126 +356,105 @@ const Map = ({ events }: MapProps) => {
       className="h-full w-full z-0"
       attributionControl={false}
       zoomControl={false}
+      closePopupOnClick={false}
       style={{ backgroundColor: "var(--background)" }}
     >
-      <TileLayer
-        attribution='&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        url={resolvedUrl}
-      />
+      <ThemeTileLayer />
+
       <MapEventsComponent />
       <MapControls />
       <CustomAttribution position="bottomright" />
 
-      <MarkerClusterGroup
-        chunkedLoading
-        iconCreateFunction={createCustomClusterIcon}
-      >
-        {events?.map((event) => {
-          const latestGeometry = event.geometry[event.geometry.length - 1];
-          const categoryId = event.categories[0]?.id;
+      <MapBackgroundClick clearActiveEvent={() => setActiveEvent(null)} />
 
-          if (latestGeometry.type === "Polygon") {
-            const polygonCoords = latestGeometry.coordinates[0].map(
-              (coordPair) => [coordPair[1], coordPair[0]] as [number, number],
-            );
-            const eventColor = getPolygonColor(categoryId);
+      {RenderedClusters}
 
-            return (
-              <Polygon
-                key={event.id}
-                positions={polygonCoords}
-                pathOptions={{
-                  color: eventColor,
-                  fillColor: eventColor,
-                  fillOpacity: 0.2,
-                  weight: 2,
-                }}
-              ></Polygon>
-            );
-          }
+      {activeEvent &&
+        (() => {
+          const activeGeometry =
+            activeEvent.geometry[activeEvent.geometry.length - 1];
 
-          if (latestGeometry.type === "Point") {
-            const latDmsCoord = convertDecimalToDMS(
-              latestGeometry.coordinates[1],
-              "lat",
-            );
-            const lngDmsCoord = convertDecimalToDMS(
-              latestGeometry.coordinates[0],
-              "lng",
-            );
+          if (activeGeometry.type !== "Point") return null;
 
-            return (
-              <Marker
-                key={event.id}
-                position={[
-                  latestGeometry.coordinates[1],
-                  latestGeometry.coordinates[0],
-                ]}
-                icon={getIconFactory(categoryId)}
-              >
-                <Popup className="theme-popup" closeButton={false}>
-                  <div className="flex flex-col min-w-50 w-75">
-                    <div className="flex flex-col p-2">
-                      <div className="flex justify-between items-center mb-2">
-                        <div
-                          className={`${getClusterBgClass(categoryId)} p-0.5 uppercase font-number text-[10px]`}
-                        >
-                          <span className="text-current">
-                            {event.categories[0]?.title}
-                          </span>
-                        </div>
-                        <ClosePopupModal />
-                      </div>
-                      <div className="flex flex-col gap-2 font-number">
-                        <h3 className="text-[11px] font-semibold text-primary">
-                          {event.title}
-                        </h3>
-                        {event.description && (
-                          <span className="text-[9px] font-mono">
-                            {event.description}
-                          </span>
-                        )}
-                        {latestGeometry.magnitudeValue && (
-                          <span className="text-[9px] font-number">
-                            <span className="text-muted-foreground">
-                              Magnitude:{" "}
-                            </span>
-                            {latestGeometry.magnitudeValue}{" "}
-                            {latestGeometry.magnitudeUnit}
-                          </span>
-                        )}
-                        <span className="text-[9px] font-number text-muted-foreground tracking-tighter">
-                          {`${latDmsCoord.degrees}° ${latDmsCoord.minutes}' ${latDmsCoord.seconds}" ${latDmsCoord.direction}`}
-                          ,{" "}
-                          {`${lngDmsCoord.degrees}° ${lngDmsCoord.minutes}' ${lngDmsCoord.seconds}" ${lngDmsCoord.direction}`}
-                        </span>
-                      </div>
+          const activeCategoryId = activeEvent.categories[0]?.id;
+          const latDmsCoord = convertDecimalToDMS(
+            activeGeometry.coordinates[1],
+            "lat",
+          );
+          const lngDmsCoord = convertDecimalToDMS(
+            activeGeometry.coordinates[0],
+            "lng",
+          );
 
-                      <div className="mt-2 flex items-center justify-between border-t border-border/50 pt-2">
-                        <span className="text-[9px] text-muted-foreground font-number">
-                          {format(new Date(latestGeometry.date), "PPP")}
-                        </span>
-                        <Link
-                          href={event.sources[0].url}
-                          className="text-[9px] font-mono hover:underline text-muted-foreground decoration-primary"
-                          style={{ color: "var(--foreground)" }}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          <span className="text-muted-foreground hover:text-primary flex items-center gap-0.5">
-                            <span>Source</span>
-                            <Chain className="size-2" />
-                          </span>
-                        </Link>
-                      </div>
+          return (
+            <Popup
+              position={[
+                activeGeometry.coordinates[1],
+                activeGeometry.coordinates[0],
+              ]}
+              closeButton={false}
+              className="theme-popup"
+              offset={[7, 12]}
+            >
+              <div className="flex flex-col min-w-50 w-75">
+                <div className="flex flex-col p-2">
+                  <div className="flex justify-between items-center mb-2">
+                    <div
+                      className={`${getClusterBgClass(activeCategoryId)} p-0.5 uppercase font-number text-[10px]`}
+                    >
+                      <span className="text-current">
+                        {activeEvent.categories[0].title}
+                      </span>
                     </div>
+                    <ClosePopupModal onClose={() => setActiveEvent(null)} />
                   </div>
-                </Popup>
-              </Marker>
-            );
-          }
-        })}
-      </MarkerClusterGroup>
+                  <div className="flex flex-col gap-2 font-number">
+                    <h3 className="text-[11px] font-semibold text-primary">
+                      {activeEvent.title}
+                    </h3>
+                    {activeEvent.description && (
+                      <span className="text-[9px] font-mono">
+                        {activeEvent.description}
+                      </span>
+                    )}
+                    {activeGeometry.magnitudeValue && (
+                      <span className="text-[9px] font-number">
+                        <span className="text-muted-foreground">
+                          Magnitude:{" "}
+                        </span>
+                        {activeGeometry.magnitudeValue}{" "}
+                        {activeGeometry.magnitudeUnit}
+                      </span>
+                    )}
+                    <span className="text-[9px] font-number text-muted-foreground tracking-tighter">
+                      {`${latDmsCoord.degrees}° ${latDmsCoord.minutes}' ${latDmsCoord.seconds}" ${latDmsCoord.direction}`}
+                      ,{" "}
+                      {`${lngDmsCoord.degrees}° ${lngDmsCoord.minutes}' ${lngDmsCoord.seconds}" ${lngDmsCoord.direction}`}
+                    </span>
+                  </div>
+
+                  <div className="mt-2 flex items-center justify-between border-t border-border/50 pt-2">
+                    <span className="text-[9px] text-muted-foreground font-number">
+                      {format(new Date(activeGeometry.date), "PPP")}
+                    </span>
+                    <Link
+                      href={activeEvent.sources[0].url}
+                      className="text-[9px] font-mono hover:underline text-muted-foreground decoration-primary"
+                      style={{ color: "var(--foreground)" }}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <span className="text-muted-foreground hover:text-primary flex items-center gap-0.5">
+                        <span>Source</span>
+                        <Chain className="size-2" />
+                      </span>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </Popup>
+          );
+        })()}
     </MapContainer>
   );
 };
@@ -407,8 +462,8 @@ const Map = ({ events }: MapProps) => {
 const createPingIcon = (colorClass: string, categoryId: string) => {
   return L.divIcon({
     className: "",
-    html: `<span class="relative flex h-6 w-6 items-center justify-center">
-        <span class="absolute inline-flex h-full w-full animate-ping animation-duration-[3s] rounded-full ${colorClass} opacity-75"></span>
+    html: `<span class="relative flex h-8 w-8 items-center justify-center">
+        <span class="absolute inline-flex h-full w-full animate-ping animation-duration-[2.5s] rounded-full ${colorClass} opacity-75"></span>
         <span class="relative inline-flex h-3 w-3 rounded-full ${colorClass}"></span>
       </span>`,
     iconSize: [16, 16],
