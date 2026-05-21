@@ -176,9 +176,9 @@
   }
 }
 
-.leaflet-fade-anim .leaflet-popup {
+/* .leaflet-fade-anim .leaflet-popup {
   transition: none !important;
-}
+} */
 
 .theme-popup .leaflet-popup-content-wrapper {
   background-color: var(--background);
@@ -197,13 +197,17 @@
   width: auto !important;
 }
 
-.theme-popup .leaflet-popup-tip {
+/* .theme-popup .leaflet-popup-tip {
   background-color: var(--background);
   border-bottom: 1px solid var(--primary);
   border-right: 1px solid var(--primary);
   box-shadow: 2px 2px 4px rgb(0 0 0 / 0.3);
-}
+} */
 
-.theme-popup .leaflet-popup-tip-container {
+/* .theme-popup .leaflet-popup-tip-container {
   margin-top: -1px;
+} */
+
+.leaflet-popup-tip-container {
+  display: none;
 }

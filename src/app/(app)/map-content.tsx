@@ -1,7 +1,6 @@
 "use client";
 
 import FilterGroup from "@/components/map/filter-group";
-import { Checkbox } from "@/components/ui/checkbox";
 import { LoaderGlitchText } from "@/components/ui/loader-glitch-text";
 import { Marquee } from "@/components/ui/marquee";
 import {
