@@ -82,7 +82,7 @@ const Page = async ({
 
   let defaultDays = "365";
   if (status === "closed") defaultDays = "120";
-  if (status === "open") defaultDays = "60";
+  if (status === "all") defaultDays = "60";
 
   const days = resolvedParams.days || defaultDays;
 

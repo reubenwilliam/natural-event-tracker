@@ -54,15 +54,23 @@ const MapContent = ({
 
   const [pending, startTransition] = useTransition();
 
+  const currentStatus = searchParams.get("status") || "open";
+
+  let maxDays = "365";
+  if (currentStatus === "closed") maxDays = "120";
+  if (currentStatus === "all") maxDays = "60";
+
+  const urlDays = searchParams.get("days");
+  const initialDays = urlDays ? parseInt(urlDays, 10) : maxDays;
+
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [selectedMagnitudes, setSelectedMagnitudes] = useState<string[]>([]);
-  const [selectedDays, setSelectedDays] = useState<number>(60);
 
   const deferredCategories = useDeferredValue(selectedCategories);
   const deferredSources = useDeferredValue(selectedSources);
   const deferredMagnitudes = useDeferredValue(selectedMagnitudes);
-  const deferredDays = useDeferredValue(selectedDays);
+  const deferredDays = useDeferredValue(Number(initialDays));
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -95,7 +103,7 @@ const MapContent = ({
       const latestGeometry = event.geometry[event.geometry.length - 1];
 
       if (latestGeometry) {
-        const unit = latestGeometry.magnitudeUnit || "unknown";
+        const unit = latestGeometry.magnitudeUnit || "-";
         counts[unit] = (counts[unit] || 0) + 1;
       }
     });
@@ -176,7 +184,13 @@ const MapContent = ({
     });
   };
 
-  const currentStatus = searchParams.get("status") || "open";
+  const handleDaysCommit = (newValue: number[]) => {
+    startTransition(() => {
+      const newParams = new URLSearchParams(searchParams.toString());
+      newParams.set("days", newValue[0].toString());
+      router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
+    });
+  };
 
   const marqueeDuration = `${Math.max(10, events.length * 0.5)}s`;
 
@@ -199,12 +213,19 @@ const MapContent = ({
         )}
       </div>
       <div className="absolute bottom-48 top-24 right-4 w-75 border border-primary/50 dark:border-primary bg-background/80 p-1.5 pointer-events-auto gap-2 overflow-auto no-scrollbar hidden md:block">
-        <span className="font-heading font-bold text-[11px] tracking-widest text-primary pl-1">
+        <span className="font-heading font-bold text-xs tracking-widest text-primary pl-1">
           FILTER:
         </span>
         <StatusFilter
           status={currentStatus}
           onStatusChange={handleStatusChange}
+          disabled={pending}
+        />
+        <DayFilter
+          key={currentStatus}
+          initialValue={Number(initialDays)}
+          onValueCommit={handleDaysCommit}
+          maxValue={Number(maxDays)}
           disabled={pending}
         />
         <FilterGroup
@@ -240,11 +261,10 @@ const MapContent = ({
             toggleFilter(unit, selectedMagnitudes, setSelectedMagnitudes)
           }
         />
-        <DayFilter value={60} onValueChange={() => {}} maxValue={100} />
       </div>
       <div className="absolute bottom-8 inset-x-4 pointer-events-none">
         <div className="w-fit hidden md:block border border-primary/50 dark:border-primary p-1.5 gap-2 bg-background/80 mb-2">
-          <span className="font-heading font-bold text-[11px] tracking-widest text-primary pl-1">
+          <span className="font-heading font-bold text-xs tracking-widest text-primary pl-1">
             KEY:
           </span>
           <div className="grid grid-cols-2 gap-2.5 pointer-events-auto">
@@ -294,9 +314,9 @@ function StatusFilter({
   disabled?: boolean;
 }) {
   return (
-    <div className="px-0.5">
+    <div className="p-1">
       <div className="border-b border-primary/50 dark:border-primary w-full mb-2">
-        <span className="font-number text-[10px] text-primary uppercase">
+        <span className="font-number text-[11px] text-primary uppercase">
           STATUS
         </span>
       </div>
@@ -323,19 +343,23 @@ function StatusFilter({
 }
 
 function DayFilter({
-  value,
-  onValueChange,
+  initialValue,
+  onValueCommit,
   maxValue,
+  disabled,
 }: {
-  value: number;
-  onValueChange: (value: number[]) => void;
+  initialValue: number;
+  onValueCommit: (value: number[]) => void;
   maxValue: number;
+  disabled?: boolean;
 }) {
+  const [value, setValue] = useState(initialValue);
+
   return (
-    <div className="px-0.5 py-2">
+    <div className="p-1">
       <div className="border-b border-primary/50 dark:border-primary w-full mb-2">
         <div className="flex items-center justify-between gap-2">
-          <span className="font-number text-[10px] text-primary uppercase">
+          <span className="font-number text-[11px] text-primary uppercase">
             DAYS
           </span>
           <span className="font-number text-[10px] text-primary">{value}</span>
@@ -343,9 +367,11 @@ function DayFilter({
       </div>
       <Slider
         value={[value]}
-        onValueChange={onValueChange}
+        onValueChange={(val) => setValue(val[0])}
+        onValueCommit={onValueCommit}
         max={maxValue}
-        step={10}
+        step={5}
+        disabled={disabled}
       />
     </div>
   );

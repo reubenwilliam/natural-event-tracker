@@ -22,9 +22,9 @@ const FilterGroup = <T extends object>({
   onToggle,
 }: FilterGroupProps<T>) => {
   return (
-    <div className="flex flex-col items-start gap-2 p-0.5">
+    <div className="flex flex-col items-start gap-2 p-1">
       <div className="border-b border-primary/50 dark:border-primary w-full">
-        <span className="font-number text-[10px] text-primary uppercase">
+        <span className="font-number text-[11px] text-primary uppercase">
           {label}
         </span>
       </div>
