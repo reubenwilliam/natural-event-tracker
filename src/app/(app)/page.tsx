@@ -1,9 +1,9 @@
-import { API_URL } from "@/types/eonet";
+import { API_URL, EonetEvent } from "@/types/eonet";
 import MapContent from "./map-content";
 
-const fetchEvents = async (statusParam: string) => {
+const fetchEvents = async (statusParam: string, daysParam: string) => {
   const response = await fetch(
-    `${API_URL}/events?status=${statusParam}&days=180`,
+    `${API_URL}/events?status=${statusParam}&days=${daysParam}`,
     {
       headers: {
         Authorization: `Bearer ${process.env.NEXT_NASA_API_KEY}`,
@@ -71,7 +71,7 @@ const fetchMagnitudes = async () => {
 const Page = async ({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; days?: string }>;
 }) => {
   const resolvedParams = await searchParams;
 
@@ -80,22 +80,37 @@ const Page = async ({
     ? resolvedParams.status
     : "open";
 
+  let defaultDays = "365";
+  if (status === "closed") defaultDays = "120";
+  if (status === "open") defaultDays = "60";
+
+  const days = resolvedParams.days || defaultDays;
+
   const [eventsQuery, categoriesQuery, sourcesQuery, magnitudesQuery] =
     await Promise.all([
-      fetchEvents(status as string),
+      fetchEvents(status as string, days),
       fetchCategories(),
       fetchSources(),
       fetchMagnitudes(),
     ]);
 
-  const events = eventsQuery?.events || [];
+  const rawEvents = eventsQuery?.events || [];
+  const slimEvents = rawEvents.map((event: EonetEvent) => {
+    const latestGeometry = event.geometry[event.geometry.length - 1];
+
+    return {
+      ...event,
+      geometry: [latestGeometry],
+    };
+  });
+
   const categories = categoriesQuery?.categories || [];
   const sources = sourcesQuery?.sources || [];
   const magnitudes = magnitudesQuery?.magnitudes || [];
 
   return (
     <MapContent
-      events={events}
+      events={slimEvents}
       categories={categories}
       sources={sources}
       magnitudes={magnitudes}

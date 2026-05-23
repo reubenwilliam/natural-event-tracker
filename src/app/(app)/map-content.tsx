@@ -1,8 +1,11 @@
 "use client";
 
 import FilterGroup from "@/components/map/filter-group";
+import { Label } from "@/components/ui/label";
 import { LoaderGlitchText } from "@/components/ui/loader-glitch-text";
 import { Marquee } from "@/components/ui/marquee";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Slider } from "@/components/ui/slider";
 import {
   Tooltip,
   TooltipContent,
@@ -13,6 +16,7 @@ import {
   EonetEvent,
   EonetMagnitude,
   EonetSource,
+  STATUS_VALUES,
 } from "@/types/eonet";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -59,8 +63,6 @@ const MapContent = ({
   const deferredSources = useDeferredValue(selectedSources);
   const deferredMagnitudes = useDeferredValue(selectedMagnitudes);
   const deferredDays = useDeferredValue(selectedDays);
-
-  const fetchingAll = searchParams.get("status") === "all";
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -160,29 +162,51 @@ const MapContent = ({
     );
   };
 
-  const handleStatusToggle = (checked: boolean) => {
+  const handleStatusChange = (newStatus: string) => {
     startTransition(() => {
       const newParams = new URLSearchParams(searchParams.toString());
-      if (checked) {
-        newParams.set("status", "all");
-      } else {
+      if (newStatus === "open") {
         newParams.delete("status");
+      } else {
+        newParams.set("status", newStatus);
       }
+
+      newParams.delete("days");
       router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
     });
   };
+
+  const currentStatus = searchParams.get("status") || "open";
 
   const marqueeDuration = `${Math.max(10, events.length * 0.5)}s`;
 
   return (
     <div className="relative h-full w-full">
       <div className="absolute inset-0 z-0 overflow-y-hidden">
-        <Map events={filteredEvents} />
+        <div
+          className={`h-full w-full transition-opacity duration-300 ${pending ? "opacity-50 pointer-events-auto grayscale-[0.5]" : "opacity-100"}`}
+        >
+          <Map events={filteredEvents} />
+        </div>
+        {pending && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
+            <LoaderGlitchText
+              text="LOADING..."
+              intensity="medium"
+              className="text-xs"
+            />
+          </div>
+        )}
       </div>
       <div className="absolute bottom-48 top-24 right-4 w-75 border border-primary/50 dark:border-primary bg-background/80 p-1.5 pointer-events-auto gap-2 overflow-auto no-scrollbar hidden md:block">
         <span className="font-heading font-bold text-[11px] tracking-widest text-primary pl-1">
           FILTER:
         </span>
+        <StatusFilter
+          status={currentStatus}
+          onStatusChange={handleStatusChange}
+          disabled={pending}
+        />
         <FilterGroup
           label="categories"
           items={categories}
@@ -216,6 +240,7 @@ const MapContent = ({
             toggleFilter(unit, selectedMagnitudes, setSelectedMagnitudes)
           }
         />
+        <DayFilter value={60} onValueChange={() => {}} maxValue={100} />
       </div>
       <div className="absolute bottom-8 inset-x-4 pointer-events-none">
         <div className="w-fit hidden md:block border border-primary/50 dark:border-primary p-1.5 gap-2 bg-background/80 mb-2">
@@ -258,6 +283,73 @@ const MapContent = ({
     </div>
   );
 };
+
+function StatusFilter({
+  status,
+  onStatusChange,
+  disabled,
+}: {
+  status: string;
+  onStatusChange: (status: string) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="px-0.5">
+      <div className="border-b border-primary/50 dark:border-primary w-full mb-2">
+        <span className="font-number text-[10px] text-primary uppercase">
+          STATUS
+        </span>
+      </div>
+      <RadioGroup
+        value={status || "open"}
+        onValueChange={onStatusChange}
+        className="grid grid-cols-3 gap-2 pointer-events-auto"
+        disabled={disabled}
+      >
+        {STATUS_VALUES.map((s) => (
+          <div key={s} className="flex items-center gap-1">
+            <RadioGroupItem value={s} id={`status-${s}`} />
+            <Label
+              htmlFor={`status-${s}`}
+              className="font-number text-[11px] cursor-pointer uppercase"
+            >
+              {s}
+            </Label>
+          </div>
+        ))}
+      </RadioGroup>
+    </div>
+  );
+}
+
+function DayFilter({
+  value,
+  onValueChange,
+  maxValue,
+}: {
+  value: number;
+  onValueChange: (value: number[]) => void;
+  maxValue: number;
+}) {
+  return (
+    <div className="px-0.5 py-2">
+      <div className="border-b border-primary/50 dark:border-primary w-full mb-2">
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-number text-[10px] text-primary uppercase">
+            DAYS
+          </span>
+          <span className="font-number text-[10px] text-primary">{value}</span>
+        </div>
+      </div>
+      <Slider
+        value={[value]}
+        onValueChange={onValueChange}
+        max={maxValue}
+        step={10}
+      />
+    </div>
+  );
+}
 
 const getCategoryColor = (categoryId: string) => {
   switch (categoryId) {

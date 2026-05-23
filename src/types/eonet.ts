@@ -56,3 +56,5 @@ export interface EonetResponse {
   link: string;
   events: EonetEvent[];
 }
+
+export const STATUS_VALUES = ["all", "open", "closed"];
