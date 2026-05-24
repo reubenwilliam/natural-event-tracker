@@ -34,6 +34,7 @@ const worldBounds: LatLngBoundsExpression = [
 
 interface MapProps {
   events: EonetEvent[];
+  toggleFilter: () => void;
 }
 
 interface CustomAttributionProps {
@@ -61,7 +62,7 @@ function MapEventsComponent() {
   return null;
 }
 
-function MapControls() {
+function MapControls({ toggleFilter }: { toggleFilter: () => void }) {
   const map = useMap();
   const [zoomLevel, setZoomLevel] = useState(map.getZoom());
 
@@ -119,9 +120,10 @@ function MapControls() {
         <div className="flex items-center gap-1 ">
           <Button
             variant="outline"
-            className="text-[11px] font-heading uppercase tracking-widest pointer-events-auto hidden md:block"
+            className="text-[11px] font-heading uppercase tracking-widest pointer-events-auto"
             onClick={(e) => {
               e.stopPropagation();
+              toggleFilter();
             }}
           >
             <span>FILTER</span>
@@ -249,7 +251,7 @@ function ThemeTileLayer() {
   );
 }
 
-const Map = ({ events }: MapProps) => {
+const Map = ({ events, toggleFilter }: MapProps) => {
   const [activeEvent, setActiveEvent] = useState<EonetEvent | null>(null);
 
   const eventsByCategory = useMemo(() => {
@@ -362,7 +364,7 @@ const Map = ({ events }: MapProps) => {
       <ThemeTileLayer />
 
       <MapEventsComponent />
-      <MapControls />
+      <MapControls toggleFilter={toggleFilter} />
       <CustomAttribution position="bottomright" />
 
       <MapBackgroundClick clearActiveEvent={() => setActiveEvent(null)} />

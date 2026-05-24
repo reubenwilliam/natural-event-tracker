@@ -54,6 +54,8 @@ const MapContent = ({
 
   const [pending, startTransition] = useTransition();
 
+  const [filterOpen, setFilterOpen] = useState(false);
+
   const currentStatus = searchParams.get("status") || "open";
 
   let maxDays = "365";
@@ -200,7 +202,10 @@ const MapContent = ({
         <div
           className={`h-full w-full transition-opacity duration-300 ${pending ? "opacity-50 pointer-events-auto grayscale-[0.5]" : "opacity-100"}`}
         >
-          <Map events={filteredEvents} />
+          <Map
+            events={filteredEvents}
+            toggleFilter={() => setFilterOpen(!filterOpen)}
+          />
         </div>
         {pending && (
           <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
@@ -212,56 +217,58 @@ const MapContent = ({
           </div>
         )}
       </div>
-      <div className="absolute bottom-48 top-24 right-4 w-75 border border-primary/50 dark:border-primary bg-background/80 p-1.5 pointer-events-auto gap-2 overflow-auto no-scrollbar hidden md:block">
-        <span className="font-heading font-bold text-xs tracking-widest text-primary pl-1">
-          FILTER:
-        </span>
-        <StatusFilter
-          status={currentStatus}
-          onStatusChange={handleStatusChange}
-          disabled={pending}
-        />
-        <DayFilter
-          key={currentStatus}
-          initialValue={Number(initialDays)}
-          onValueCommit={handleDaysCommit}
-          maxValue={Number(maxDays)}
-          disabled={pending}
-        />
-        <FilterGroup
-          label="categories"
-          items={categories}
-          counts={categoryCounts}
-          selected={selectedCategories}
-          getId={(c) => c.id}
-          getLabel={(c) => c.title}
-          onToggle={(id) =>
-            toggleFilter(id, selectedCategories, setSelectedCategories)
-          }
-        />
-        <FilterGroup
-          label="sources"
-          items={sources}
-          counts={sourceCounts}
-          selected={selectedSources}
-          getId={(s) => s.id}
-          getLabel={(s) => s.title}
-          onToggle={(id) =>
-            toggleFilter(id, selectedSources, setSelectedSources)
-          }
-        />
-        <FilterGroup
-          label="magnitudes"
-          items={magnitudes}
-          counts={magnitudeCounts}
-          selected={selectedMagnitudes}
-          getId={(m) => m.unit}
-          getLabel={(m) => m.name}
-          onToggle={(unit) =>
-            toggleFilter(unit, selectedMagnitudes, setSelectedMagnitudes)
-          }
-        />
-      </div>
+      {filterOpen && (
+        <div className="absolute bottom-48 top-24 right-4 w-75 border border-primary/50 dark:border-primary bg-background/80 p-1.5 pointer-events-auto gap-2 overflow-auto no-scrollbar">
+          <span className="font-heading font-bold text-xs tracking-widest text-primary pl-1">
+            FILTER:
+          </span>
+          <StatusFilter
+            status={currentStatus}
+            onStatusChange={handleStatusChange}
+            disabled={pending}
+          />
+          <DayFilter
+            key={currentStatus}
+            initialValue={Number(initialDays)}
+            onValueCommit={handleDaysCommit}
+            maxValue={Number(maxDays)}
+            disabled={pending}
+          />
+          <FilterGroup
+            label="categories"
+            items={categories}
+            counts={categoryCounts}
+            selected={selectedCategories}
+            getId={(c) => c.id}
+            getLabel={(c) => c.title}
+            onToggle={(id) =>
+              toggleFilter(id, selectedCategories, setSelectedCategories)
+            }
+          />
+          <FilterGroup
+            label="sources"
+            items={sources}
+            counts={sourceCounts}
+            selected={selectedSources}
+            getId={(s) => s.id}
+            getLabel={(s) => s.title}
+            onToggle={(id) =>
+              toggleFilter(id, selectedSources, setSelectedSources)
+            }
+          />
+          <FilterGroup
+            label="magnitudes"
+            items={magnitudes}
+            counts={magnitudeCounts}
+            selected={selectedMagnitudes}
+            getId={(m) => m.unit}
+            getLabel={(m) => m.name}
+            onToggle={(unit) =>
+              toggleFilter(unit, selectedMagnitudes, setSelectedMagnitudes)
+            }
+          />
+        </div>
+      )}
       <div className="absolute bottom-8 inset-x-4 pointer-events-none">
         <div className="w-fit hidden md:block border border-primary/50 dark:border-primary p-1.5 gap-2 bg-background/80 mb-2">
           <span className="font-heading font-bold text-xs tracking-widest text-primary pl-1">
