@@ -1,10 +1,10 @@
 import { QueryProvider } from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { META_THEME_COLORS } from "@/hooks/use-meta-color";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, JetBrains_Mono, Syne } from "next/font/google";
 import "./globals.css";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { META_THEME_COLORS } from "@/hooks/use-meta-color";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,7 +26,7 @@ const jetBrains = JetBrains_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl = process.env.NEXTPUBLIC_APP_URL ?? "http://localhost:3000";
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 export const viewport: Viewport = {
   themeColor: [
@@ -38,34 +38,37 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "Natural Event Tracker",
-    template: "%s | Natural Event Tracker",
+    default: "EONET - Natural Event Tracker",
+    template: "%s | EONET",
   },
   description: "Track natural events around the world using NASA's EONET API",
   metadataBase: new URL(siteUrl),
   openGraph: {
-    title: "Natural Event Tracker",
+    title: "EONET - Natural Event Tracker",
     description: "Track natural events around the world using NASA's EONET API",
     siteName: "Natural Event Tracker",
     url: siteUrl,
     images: [
       {
-        url: "/og.png",
+        url: "/og/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Natural Event Tracker",
+        alt: "EONET - Natural Event Tracker",
       },
     ],
     type: "website",
+    locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Natural Event Tracker",
+    title: "EONET - Natural Event Tracker",
     description: "Track natural events around the world using NASA's EONET API",
-    images: ["/og.png"],
+    images: ["/og/og-twitter.png"],
   },
   icons: {
-    icon: "favicon.ico",
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
   },
 };
 
