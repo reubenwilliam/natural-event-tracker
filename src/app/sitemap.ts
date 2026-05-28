@@ -12,5 +12,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
 }
 
 const absoluteUrl = (path: string) => {
-  return `https://natural-event-tracker.vercel.app${path}`;
+  return `https://eonet.reubenwilliam.xyz${path}`;
 };

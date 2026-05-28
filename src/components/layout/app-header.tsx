@@ -24,7 +24,7 @@ const AppHeader = () => {
           >
             <Map className="text-primary" />
             <span className="text-sm font-heading tracking-wider font-medium text-primary">
-              NATURAL EVENTS TRACKER
+              NATURAL EVENT TRACKER
             </span>
           </Link>
           <div className="flex items-center gap-1 pointer-events-none">
