@@ -1,4 +1,4 @@
-<!-- <img width="1200" height="630" alt="banner" src="https://eonet.reubenwilliam.xyz/og/og-image.png" />  -->
+<img width="1200" height="630" alt="banner" src="https://eonet.reubenwilliam.xyz/og/og-image.png" /> 
 
 # 🗺️ EONET - Natural Event Tracker
 
